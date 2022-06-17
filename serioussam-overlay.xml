@@ -9,7 +9,7 @@
          <email>t.x00100x.t@yandex.ru</email>
          <name>tx00100xt</name>
       </owner>
-      <source type="git">jttps://github.com/tx00100xt/serioussam-overlay.git</source>
+      <source type="git">https://github.com/tx00100xt/serioussam-overlay.git</source>
       <feed>https://github.com/tx00100xt/serioussam-overlay/commits/master.atom</feed>
    </repo>
 </repositories>
