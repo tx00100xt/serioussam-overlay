@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE repositories SYSTEM "/dtd/repositories.dtd">
+<repositories xmlns="" version="1.0">
+   <repo quality="experimental" status="unofficial">
+      <name>serioussam</name>
+      <description>Serious Sam Classic v1.10 with mods</description>
+      <homepage>https://github.com/tx00100xt/serioussam-overlay</homepage>
+      <owner type="person">
+         <email>t.x00100x.t@yandex.ru</email>
+         <name>tx00100xt</name>
+      </owner>
+      <source type="git">jttps://github.com/tx00100xt/serioussam-overlay.git</source>
+      <feed>https://github.com/tx00100xt/serioussam-overlay/commits/master.atom</feed>
+   </repo>
+</repositories>

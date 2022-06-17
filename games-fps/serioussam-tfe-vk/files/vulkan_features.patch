@@ -1,0 +1,73 @@
+diff -aurN a/Engine/Graphics/Gfx_Vulkan.cpp b/Engine/Graphics/Gfx_Vulkan.cpp
+--- a/Engine/Graphics/Gfx_Vulkan.cpp	2022-06-05 20:19:03.187202919 +0300
++++ b/Engine/Graphics/Gfx_Vulkan.cpp	2022-06-05 22:12:49.041895339 +0300
+@@ -439,7 +439,8 @@
+   gl_VkPhysDevice = VK_NULL_HANDLE;
+   gl_VkPhMemoryProperties = {};
+   gl_VkPhProperties = {};
+-  gl_VkPhFeatures = {};
++  gl_VkPhFeatures[0] = {};
++  gl_VkPhFeatures[1] = {};
+   gl_VkPhSurfCapabilities = {};
+ 
+   gl_VkQueueFamGraphics = 0;
+@@ -798,8 +799,9 @@
+   VkDeviceCreateInfo createInfo = {};
+   createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+   createInfo.queueCreateInfoCount = (uint32_t)queueInfos.Count();
+-  createInfo.pQueueCreateInfos = &queueInfos[0];
+-  createInfo.pEnabledFeatures = &features;
++  createInfo.pQueueCreateInfos = &queueInfos[0];  
++  //createInfo.pEnabledFeatures = &features;
++  createInfo.pEnabledFeatures = &gl_VkPhFeatures[gl_vkNumDev];
+   createInfo.enabledExtensionCount = (uint32_t)gl_VkPhysDeviceExtensions.Count();
+   createInfo.ppEnabledExtensionNames = &gl_VkPhysDeviceExtensions[0];
+ #if SVK_ENABLE_VALIDATION
+diff -aurN a/Engine/Graphics/Vulkan/SvkMain.h b/Engine/Graphics/Vulkan/SvkMain.h
+--- a/Engine/Graphics/Vulkan/SvkMain.h	2022-06-05 20:19:03.190536288 +0300
++++ b/Engine/Graphics/Vulkan/SvkMain.h	2022-06-05 22:11:35.621373470 +0300
+@@ -125,7 +125,8 @@
+   VkPhysicalDevice                        gl_VkPhysDevice;
+   VkPhysicalDeviceMemoryProperties        gl_VkPhMemoryProperties;
+   VkPhysicalDeviceProperties              gl_VkPhProperties;
+-  VkPhysicalDeviceFeatures                gl_VkPhFeatures;
++  VkPhysicalDeviceFeatures                gl_VkPhFeatures[2];
++  INDEX                                   gl_vkNumDev;
+   VkSurfaceCapabilitiesKHR                gl_VkPhSurfCapabilities;
+   CStaticArray<VkSurfaceFormatKHR>        gl_VkPhSurfFormats;
+   CStaticArray<VkPresentModeKHR>          gl_VkPhSurfPresentModes;
+diff -aurN a/Engine/Graphics/Vulkan/SvkUtils.cpp b/Engine/Graphics/Vulkan/SvkUtils.cpp
+--- a/Engine/Graphics/Vulkan/SvkUtils.cpp	2022-06-05 20:19:03.190536288 +0300
++++ b/Engine/Graphics/Vulkan/SvkUtils.cpp	2022-06-05 22:12:25.908397556 +0300
+@@ -347,6 +347,11 @@
+   VK_CHECKERROR(r)
+     ASSERT(physDeviceCount > 0);
+ 
++  // vulkan devices count
++  if (physDeviceCount > 2) {
++    physDeviceCount = 2;
++  }
++
+   CPrintF("Vulkan: Physical Devices Count: %d\n", physDeviceCount);
+ 
+   for (uint32_t i = 0; i < physDeviceCount; i++)
+@@ -361,7 +366,7 @@
+       uint32_t formatsCount = 0, presentModesCount = 0;
+ 
+       gl_VkPhysDevice = physDevice;
+-      vkGetPhysicalDeviceFeatures(physDevice, &gl_VkPhFeatures);
++      vkGetPhysicalDeviceFeatures(physDevice, &gl_VkPhFeatures[i]);
+       vkGetPhysicalDeviceMemoryProperties(physDevice, &gl_VkPhMemoryProperties);
+       vkGetPhysicalDeviceProperties(physDevice, &gl_VkPhProperties);
+       vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physDevice, gl_VkSurface, &gl_VkPhSurfCapabilities);
+@@ -461,7 +466,9 @@
+         gl_VkMaxSampleCount = VK_SAMPLE_COUNT_1_BIT;
+         CPrintF("Vulkan: VK_SAMPLE_COUNT_2_BIT\n");
+       }
+-      
++ 
++      gl_vkNumDev = i;     
++      CPrintF("Vulkan: Physical Device Number: %d\n", i);
+       return TRUE;
+     }
+   }

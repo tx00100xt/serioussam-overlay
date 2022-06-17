@@ -1,0 +1,610 @@
+diff -aurN a/Engine/Base/Synchronization.h b/Engine/Base/Synchronization.h
+--- a/Engine/Base/Synchronization.h	2022-06-10 23:02:49.051442084 +0300
++++ b/Engine/Base/Synchronization.h	2022-06-08 20:16:06.843824000 +0300
+@@ -19,6 +19,9 @@
+   #pragma once
+ #endif
+ 
++#include <pthread.h>
++#include <stdio.h>
++
+ // intra-process mutex (only used by thread of same process)
+ class CTCriticalSection {
+ public:
+@@ -52,6 +55,26 @@
+   ENGINE_API void Unlock(void);
+ };
+ 
++template <typename T>
++class CThreadLocal {
++  pthread_key_t key;
++
++public:
++  CThreadLocal() { pthread_key_create(&key, nullptr); }
++
++  T &get() {
++    T *ptr = (T *)pthread_getspecific(key);
++    if (!ptr) {
++      ptr = new T;
++      memset(ptr, 0, sizeof(T));
++      pthread_setspecific(key, ptr);
++    }
++    return *ptr;
++  }
++
++  T &operator*() { return get(); }
++};
++
+ #endif  /* include-once check. */
+ 
+ 
+diff -aurN a/Engine/Base/Timer.cpp b/Engine/Base/Timer.cpp
+--- a/Engine/Base/Timer.cpp	2022-06-10 23:02:49.051442084 +0300
++++ b/Engine/Base/Timer.cpp	2022-06-10 17:53:09.971558000 +0300
+@@ -30,6 +30,7 @@
+ 
+ #if defined PLATFORM_UNIX
+ #include <sys/time.h>
++#include <pthread.h>
+ #endif
+ 
+ #if PLATFORM_FREEBSD
+@@ -255,6 +256,8 @@
+ // pointer to global timer object
+ CTimer *_pTimer = NULL;
+ 
++pthread_t g_timerMainThread;
++
+ const TIME CTimer::TickQuantum = TIME(1/20.0);    // 20 ticks per second
+ 
+ /*
+@@ -321,8 +324,8 @@
+     CTimerValue tvTimeNow = _pTimer->GetHighPrecisionTimer();
+     TIME        tmTickNow = _pTimer->tm_RealTimeTimer;
+     // calculate how long has passed since we have last been on time
+-    //TIME tmTimeDelay = (TIME)(tvTimeNow - _pTimer->tm_tvLastTimeOnTime).GetSeconds();
+-    //TIME tmTickDelay =       (tmTickNow - _pTimer->tm_tmLastTickOnTime);
++    TIME tmTimeDelay = (TIME)(tvTimeNow - _pTimer->tm_tvLastTimeOnTime).GetSeconds();
++    TIME tmTickDelay =       (tmTickNow - _pTimer->tm_tmLastTickOnTime);
+ 
+     _sfStats.StartTimer(CStatForm::STI_TIMER);
+     // if we are keeping up to time (more or less)
+@@ -356,6 +359,7 @@
+   CTimer_TimerFunc_internal();
+ }
+ #elif (defined PLATFORM_UNIX)
++/*
+ #include "SDL.h"
+ Uint32 CTimer_TimerFunc_SDL(Uint32 interval, void* param)
+ {
+@@ -366,6 +370,25 @@
+   CTimer_TimerFunc_internal();
+   return(interval);
+ }
++*/
++void *CTimer_TimerMain(void *input) {
++  while(true) {
++    // sleep
++    usleep(ULONG(_pTimer->TickQuantum * 1000.0f * 1000.0f)); // microsecond
++
++    // TODO: unsynch
++    if (_pTimer->tm_bPaused) {
++      usleep(50000);
++      continue;
++    }
++
++    // access to the list of handlers must be locked
++    CTSingleLock slHooks(&_pTimer->tm_csHooks, TRUE);
++    // handle all timers
++    CTimer_TimerFunc_internal();
++  }
++}
++
+ #endif
+ #endif
+ 
+@@ -547,7 +570,7 @@
+     if( tm_TimerID==NULL) FatalError(TRANS("Cannot initialize multimedia timer!"));
+ 
+    #else
+-
++/*
+     if (SDL_Init(SDL_INIT_TIMER) == -1) FatalError(TRANS("Cannot initialize multimedia timer!"));
+     tm_TimerID = SDL_AddTimer(ULONG(TickQuantum*1000.0f), CTimer_TimerFunc_SDL, NULL);
+     if( tm_TimerID==NULL) FatalError(TRANS("Cannot initialize multimedia timer!"));
+@@ -566,6 +589,29 @@
+     // report fatal
+     if( iTry>3) FatalError(TRANS("Problem with initializing multimedia timer - please try again."));
+   }
++*/
++    int ret = pthread_create(&g_timerMainThread, 0, &CTimer_TimerMain, nullptr);
++    if (ret != 0) {
++      const char *err;
++      FatalError("Cannot create multimedia thread: %s (%i)", strerror(ret), ret);
++    }
++    pthread_setname_np(g_timerMainThread, "SeriousSamTimer");
++   #endif
++
++    // make sure that timer interrupt is ticking
++    INDEX iTry = 1;
++    for (; iTry <= 3; iTry++) {
++      const TIME tmTickBefore = GetRealTimeTick();
++      usleep(1000 * 1000 * iTry * 3 * TickQuantum);
++      const TIME tmTickAfter = GetRealTimeTick();
++      if (tmTickBefore != tmTickAfter) break;
++      usleep(1000 * 1000 * iTry);
++    }
++    // report fatal
++    if (iTry > 3) {
++      FatalError(TRANS("Problem with initializing multimedia timer - please try again."));
++    }
++  }
+ #endif  // !defined SINGLE_THREADED
+ }
+ 
+diff -aurN a/Engine/Base/Timer.h b/Engine/Base/Timer.h
+--- a/Engine/Base/Timer.h	2022-06-10 23:02:49.051442084 +0300
++++ b/Engine/Base/Timer.h	2022-06-08 21:12:45.861170000 +0300
+@@ -93,6 +93,7 @@
+   CTCriticalSection tm_csHooks;   // access to timer hooks
+   CListHead         tm_lhHooks;   // a list head for timer hooks
+   BOOL tm_bInterrupt;       // set if interrupt is added
++  BOOL tm_bPaused = false;       // true if all timer should be pausedr.h
+ 
+ // interface:
+ public:
+diff -aurN a/Engine/Base/Unix/UnixSynchronization.cpp b/Engine/Base/Unix/UnixSynchronization.cpp
+--- a/Engine/Base/Unix/UnixSynchronization.cpp	2022-06-10 23:02:49.051442084 +0300
++++ b/Engine/Base/Unix/UnixSynchronization.cpp	2022-06-11 14:09:16.857165748 +0300
+@@ -1,70 +1,306 @@
+-/* Copyright (c) 2002-2012 Croteam Ltd. All rights reserved. */
++/* Copyright (c) 2002-2012 Croteam Ltd.
++This program is free software; you can redistribute it and/or modify
++it under the terms of version 2 of the GNU General Public License as published by
++the Free Software Foundation
+ 
+-#include <stdlib.h>
+-#include <stdio.h>
+-#include <pthread.h>
++
++This program is distributed in the hope that it will be useful,
++but WITHOUT ANY WARRANTY; without even the implied warranty of
++MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++GNU General Public License for more details.
++
++You should have received a copy of the GNU General Public License along
++with this program; if not, write to the Free Software Foundation, Inc.,
++51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA. */
+ 
+ #include "Engine/StdH.h"
++
++#include <Engine/Base/Console.h>
++#include <Engine/Base/Translation.h>
+ #include <Engine/Base/Synchronization.h>
+-//#pragma GCC optimize 0
+-CTCriticalSection::CTCriticalSection(void)
+-{
+-    cs_pvObject = (void *) new pthread_mutex_t;
+-    pthread_mutex_init((pthread_mutex_t *) cs_pvObject, NULL);
+-    LockCounter = 0;
+-    owner = 0;
++#include <Engine/Base/Unix/UnixSynchronization.h>
++#include <pthread.h>
++#include <stdio.h>
++
++/*
++This is implementation of OPTEX (optimized mutex),
++originally from MSDN Periodicals 1996, by Jeffrey Richter.
++
++It is updated for clearer comments, shielded with tons of asserts,
++and modified to support TryToEnter() function. The original version
++had timeout parameter, bu it didn't work.
++
++NOTES:
++- TryToEnter() was not tested with more than one thread, and perhaps
++  there might be some problems with the final decrementing and eventual event resetting
++  when lock fails. Dunno.
++
++- take care to center the lock tests around 0 (-1 means not locked). that is
++  neccessary because win95 returns only <0, ==0 and >0 results from interlocked
++  functions, so testing against any other number than 0 doesn't work.
++*/
++
++///////////////////////////////////////////////////////////////////////////////////////
++///////////////////////////////////////////////////////////////////////////////////////
++///////////////////////////////////////////////////////////////////////////////////////
++struct HandlePrivate {
++    pthread_mutex_t mutex;
++    pthread_cond_t cond;
++    BOOL state;
++};
++
++LONG InterlockedIncrement(LONG *Addend) {
++  return __sync_add_and_fetch(Addend, 1);
+ }
+ 
+-CTCriticalSection::~CTCriticalSection(void)
+-{
+-    pthread_mutex_destroy((pthread_mutex_t *) cs_pvObject);
+-    delete (pthread_mutex_t *) cs_pvObject;
++LONG InterlockedDecrement(LONG volatile *Addend) {
++  return __sync_sub_and_fetch(Addend, 1);
+ }
+ 
+-INDEX CTCriticalSection::Lock(void)
++DWORD GetCurrentThreadId() {
++  static_assert(sizeof(pthread_t) == sizeof(size_t), "");
++  return (DWORD) pthread_self();
++}
++
++HANDLE CreateEvent(void *attr, BOOL bManualReset, BOOL initial, LPCSTR lpName) {
++  ASSERT(!bManualReset);
++  //CPrintF( TRANS("[pthread_mutex] Create Event.\n"));
++  HandlePrivate *handle = new HandlePrivate;
++
++  pthread_mutex_init(&handle->mutex, nullptr);
++  pthread_cond_init(&handle->cond, nullptr);
++  handle->state = initial;
++
++  return (HANDLE) handle;
++}
++
++BOOL CloseHandle(HANDLE hObject) {
++  delete (HandlePrivate *) hObject;
++  return true;
++}
++
++DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds) {
++  ASSERT(dwMilliseconds == INFINITE);
++  HandlePrivate *handle = (HandlePrivate *) hHandle;
++
++  pthread_mutex_lock(&handle->mutex);
++  while (!handle->state) {
++    pthread_cond_wait(&handle->cond, &handle->mutex);
++  }
++  handle->state = false;
++  pthread_mutex_unlock(&handle->mutex);
++  return WAIT_OBJECT_0;
++}
++
++BOOL SetEvent(HANDLE hEvent) {
++  HandlePrivate *handle = (HandlePrivate *) hEvent;
++
++  pthread_mutex_lock(&handle->mutex);
++  handle->state = true;
++  pthread_cond_signal(&handle->cond);
++  pthread_mutex_unlock(&handle->mutex);
++
++  return true;
++}
++
++BOOL ResetEvent(HANDLE hEvent) {
++  HandlePrivate *handle = (HandlePrivate *) hEvent;
++
++  pthread_mutex_lock(&handle->mutex);
++  handle->state = false;
++  pthread_mutex_unlock(&handle->mutex);
++
++  return true;
++}
++
++///////////////////////////////////////////////////////////////////////////////////////
++// The opaque OPTEX data structure
++///////////////////////////////////////////////////////////////////////////////////////
++typedef struct {
++   LONG   lLockCount; // note: must center all tests around 0 for win95 compatibility!
++   DWORD  dwThreadId;
++   LONG   lRecurseCount;
++   HANDLE hEvent;
++} OPTEX, *POPTEX;
++
++CThreadLocal<INDEX> _iLastLockedMutex;
++
++BOOL OPTEX_Initialize (POPTEX poptex) {
++
++  poptex->lLockCount = -1;   // No threads have enterred the OPTEX
++  poptex->dwThreadId = 0;    // The OPTEX is unowned
++  poptex->lRecurseCount = 0; // The OPTEX is unowned
++  poptex->hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
++  return(poptex->hEvent != NULL);  // TRUE if the event is created
++}
++
++VOID OPTEX_Delete (POPTEX poptex) {
++
++   // No in-use check
++   CloseHandle(poptex->hEvent);  // Close the event
++}
++
++INDEX OPTEX_Enter (POPTEX poptex)
+ {
+-    if (owner == pthread_self())
+-        return(++LockCounter);
+-    if(owner==0 && LockCounter) {
+-        //printf("Warning, suspicious mutex state, force unlocking...\n");
+-        pthread_mutex_unlock((pthread_mutex_t *) cs_pvObject);
+-        LockCounter=0;
+-    }
+-    if(owner!=0) {
+-      // do something???
+-    }
+-    pthread_mutex_lock((pthread_mutex_t *) cs_pvObject);
+-    owner = pthread_self();
+-    return(++LockCounter);
++
++  DWORD dwThreadId = GetCurrentThreadId();  // The calling thread's ID
++
++  // increment lock counter
++  INDEX ctLocked = InterlockedIncrement(&poptex->lLockCount);
++  ASSERT(poptex->lLockCount>=0);
++
++  // if this is first thread that entered
++  if (ctLocked == 0) {
++
++    // mark that we own it, exactly once
++    ASSERT(poptex->dwThreadId==0);
++    ASSERT(poptex->lRecurseCount==0);
++    poptex->dwThreadId = dwThreadId;
++    poptex->lRecurseCount = 1;
++
++  // if already owned
++  } else {
++
++    // if owned by this thread
++    if (poptex->dwThreadId == dwThreadId) {
++      // just mark that we own it once more
++      poptex->lRecurseCount++;
++      ASSERT(poptex->lRecurseCount>1);
++
++    // if owned by some other thread
++    } else {
++
++      // wait for the owning thread to release the OPTEX
++      DWORD dwRet = WaitForSingleObject(poptex->hEvent, INFINITE);
++      ASSERT(dwRet == WAIT_OBJECT_0);
++
++      // mark that we own it, exactly once
++      ASSERT(poptex->dwThreadId==0);
++      ASSERT(poptex->lRecurseCount==0);
++      poptex->dwThreadId = dwThreadId;
++      poptex->lRecurseCount = 1;
++    }
++  }
++  ASSERT(poptex->lRecurseCount>=1);
++  ASSERT(poptex->lLockCount>=0);
++  return poptex->lRecurseCount;
+ }
+ 
+-INDEX CTCriticalSection::TryToLock(void)
++INDEX OPTEX_TryToEnter (POPTEX poptex)
+ {
+-    if (owner == pthread_self())
+-        return(++LockCounter);
++  ASSERT(poptex->lLockCount>=-1);
++  DWORD dwThreadId = GetCurrentThreadId();  // The calling thread's ID
++
++  // increment lock counter
++  INDEX ctLocked = InterlockedIncrement(&poptex->lLockCount);
++  ASSERT(poptex->lLockCount>=0);
++
++  // if this is first thread that entered
++  if (ctLocked == 0) {
++
++    // mark that we own it, exactly once
++    ASSERT(poptex->dwThreadId==0);
++    ASSERT(poptex->lRecurseCount==0);
++    poptex->dwThreadId = dwThreadId;
++    poptex->lRecurseCount = 1;
++    // lock succeeded
++    return poptex->lRecurseCount;
++
++  // if already owned
++  } else {
++
++    // if owned by this thread
++    if (poptex->dwThreadId == dwThreadId) {
+ 
+-    if (pthread_mutex_trylock((pthread_mutex_t *) cs_pvObject) == EBUSY)
+-        return(0);
++      // just mark that we own it once more
++      poptex->lRecurseCount++;
++      ASSERT(poptex->lRecurseCount>=1);
+ 
+-    owner = pthread_self();
+-    return(++LockCounter);
++      // lock succeeded
++      return poptex->lRecurseCount;
++
++    // if owned by some other thread
++    } else {
++
++      // give up taking it
++      INDEX ctLocked = InterlockedDecrement(&poptex->lLockCount);
++      ASSERT(poptex->lLockCount>=-1);
++
++      // if unlocked in the mean time
++//      if (ctLocked<0) {
++//        // NOTE: this has not been tested!
++//        // ignore sent the signal
++//        ResetEvent(poptex->hEvent);
++//      }
++
++      // lock failed
++      return 0;
++    }
++  }
+ }
+ 
+-INDEX CTCriticalSection::Unlock(void)
++INDEX OPTEX_Leave (POPTEX poptex)
+ {
+-    if (owner == pthread_self())
+-    {
+-        if (LockCounter > 0)
+-        {
+-            if (--LockCounter == 0)
+-            {
+-                int ret = pthread_mutex_unlock((pthread_mutex_t *) cs_pvObject);
+-                owner = 0;
+-            }
+-        }
++
++  ASSERT(poptex->dwThreadId==GetCurrentThreadId());
++
++  // we own in one time less
++  poptex->lRecurseCount--;
++  ASSERT(poptex->lRecurseCount>=0);
++  INDEX ctResult = poptex->lRecurseCount;
++
++  // if more multiple locks from this thread
++  if (poptex->lRecurseCount > 0) {
++
++    // just decrement the lock count
++    InterlockedDecrement(&poptex->lLockCount);
++//    ASSERT(poptex->lLockCount>=-1);
++
++  // if no more multiple locks from this thread
++  } else {
++
++    // mark that this thread doesn't own it
++    poptex->dwThreadId = 0;
++    // decrement the lock count
++    INDEX ctLocked = InterlockedDecrement(&poptex->lLockCount);
++    ASSERT(poptex->lLockCount>=-1);
++    // if some threads are waiting for it
++    if ( ctLocked >= 0) {
++      // wake one of them
++      SetEvent(poptex->hEvent);
+     }
++  }
+ 
+-    return(LockCounter);
++  ASSERT(poptex->lRecurseCount>=0);
++  ASSERT(poptex->lLockCount>=-1);
++  return ctResult;
++}
++
++// these are just wrapper classes for locking/unlocking
++
++CTCriticalSection::CTCriticalSection(void)
++{
++  // index must be set before using the mutex
++  cs_iIndex = -2;
++  cs_pvObject = new OPTEX;
++  OPTEX_Initialize((OPTEX*)cs_pvObject);
++}
++CTCriticalSection::~CTCriticalSection(void)
++{
++  OPTEX_Delete((OPTEX*)cs_pvObject);
++  delete (OPTEX*)cs_pvObject;
++}
++INDEX CTCriticalSection::Lock(void)
++{
++  return OPTEX_Enter((OPTEX*)cs_pvObject);
++}
++INDEX CTCriticalSection::TryToLock(void)
++{
++  return OPTEX_TryToEnter((OPTEX*)cs_pvObject);
++}
++INDEX CTCriticalSection::Unlock(void)
++{
++  return OPTEX_Leave((OPTEX*)cs_pvObject);
+ }
+ 
+ CTSingleLock::CTSingleLock(CTCriticalSection *pcs, BOOL bLock) : sl_cs(*pcs)
+@@ -73,7 +309,7 @@
+   sl_bLocked = FALSE;
+   sl_iLastLockedIndex = -2;
+   // critical section must have index assigned
+-  //ASSERT(sl_cs.cs_iIndex>=1||sl_cs.cs_iIndex==-1);
++  ASSERT(sl_cs.cs_iIndex>=1||sl_cs.cs_iIndex==-1);
+   // if should lock immediately
+   if (bLock) {
+     Lock();
+@@ -98,14 +334,14 @@
+     // lock
+     INDEX ctLocks = sl_cs.Lock();
+     // if this mutex was not locked already
+-//    if (ctLocks==1) {
+-//      // check that locking in given order
+-//      if (sl_cs.cs_iIndex!=-1) {
+-//        ASSERT(_iLastLockedMutex<sl_cs.cs_iIndex);
+-//        sl_iLastLockedIndex = _iLastLockedMutex;
+-//        _iLastLockedMutex = sl_cs.cs_iIndex;
+-//      }
+-//    }
++    if (ctLocks==1) {
++      // check that locking in given order
++      if (sl_cs.cs_iIndex!=-1) {
++        ASSERT(*_iLastLockedMutex<sl_cs.cs_iIndex);
++        sl_iLastLockedIndex = *_iLastLockedMutex;
++        *_iLastLockedMutex = sl_cs.cs_iIndex;
++      }
++    }
+   }
+   sl_bLocked = TRUE;
+ }
+@@ -122,14 +358,14 @@
+       sl_bLocked = TRUE;
+ 
+       // if this mutex was not locked already
+-//      if (ctLocks==1) {
+-//        // check that locking in given order
+-//        if (sl_cs.cs_iIndex!=-1) {
+-//          ASSERT(_iLastLockedMutex<sl_cs.cs_iIndex);
+-//          sl_iLastLockedIndex = _iLastLockedMutex;
+-//          _iLastLockedMutex = sl_cs.cs_iIndex;
+-//        }
+-//      }
++      if (ctLocks==1) {
++        // check that locking in given order
++        if (sl_cs.cs_iIndex!=-1) {
++          ASSERT(*_iLastLockedMutex<sl_cs.cs_iIndex);
++          sl_iLastLockedIndex = *_iLastLockedMutex;
++          *_iLastLockedMutex = sl_cs.cs_iIndex;
++        }
++      }
+     }
+   }
+   return sl_bLocked;
+@@ -150,14 +386,12 @@
+     // if unlocked completely
+     if (ctLocks==0) {
+       // check that unlocking in exact reverse order
+-//      if (sl_cs.cs_iIndex!=-1) {
+-//        ASSERT(_iLastLockedMutex==sl_cs.cs_iIndex);
+-//        _iLastLockedMutex = sl_iLastLockedIndex;
+-//        sl_iLastLockedIndex = -2;
+-//      }
++      if (sl_cs.cs_iIndex!=-1) {
++        ASSERT(*_iLastLockedMutex==sl_cs.cs_iIndex);
++        *_iLastLockedMutex = sl_iLastLockedIndex;
++        sl_iLastLockedIndex = -2;
++      }
+     }
+   }
+   sl_bLocked = FALSE;
+ }
+-
+-
+diff -aurN a/Engine/Base/Unix/UnixSynchronization.h b/Engine/Base/Unix/UnixSynchronization.h
+--- a/Engine/Base/Unix/UnixSynchronization.h	1970-01-01 03:00:00.000000000 +0300
++++ b/Engine/Base/Unix/UnixSynchronization.h	2022-06-08 18:39:28.078301000 +0300
+@@ -0,0 +1,18 @@
++#include <Engine/Base/Synchronization.h>
++
++#define WAIT_OBJECT_0 0
++#define INFINITE 0xFFFFFFFF
++#define VOID void
++typedef void *PVOID;
++typedef PVOID HANDLE;
++typedef const char *LPCSTR;
++
++
++LONG InterlockedIncrement(LONG *Addend);
++LONG InterlockedDecrement(LONG volatile *Addend);
++DWORD GetCurrentThreadId();
++HANDLE CreateEvent(void *attr, BOOL bManualReset, BOOL initial, LPCSTR lpName);
++BOOL CloseHandle(HANDLE hObject);
++BOOL ResetEvent(HANDLE hEvent);
++BOOL SetEvent(HANDLE hEvent);
++DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds);
