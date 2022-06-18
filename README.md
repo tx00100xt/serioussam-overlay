@@ -1,23 +1,43 @@
 ## Serious Sam Classic Gentoo overlay
 
 Description:  
-This overlay contains gentoo ebuild's to build from the source game Serious Sam
+This overlay contains gentoo ebuild's to build from the source games  
+Serious Sam The First Encounter and Serious Sam The Second Encounter.
+
+### Getting this overlay
+
+Type this in your terminal:
+
+```
+emerge layman 
+layman -o https://raw.githubusercontent.com/tx00100xt/serioussam-overlay/main/serioussam-overlay.xml -f -a serioussam
+```
 
 ### Ebuild's
 
-To build a game with Opengl support, use:
-   * serioussam-tfe
-   * serioussam-tse
+To build a game with Opengl support, use command:
 
-To build a game with Opengl and Vulkan support, use:
-   * serioussam-tfe-vk
-   * serioussam-tse-vk
+```
+emerge serioussam-tfe
+emerge serioussam-tse
+```
 
-To copy game content from your CD or your CD image (First release or Gold edition), use:.
-   * serioussam-tfe-data
-   * serioussam-tse-data
+To build a game with Opengl and Vulkan support, use command:
+
+```
+emerge serioussam-tfe-vk
+emerge serioussam-tse-vk
+
+```
+To copy game content from your CD or your CD image (First release or Gold edition), use command:
+
+```
+emerge serioussam-tfe-data
+emerge serioussam-tse-data
+```
 
 ### The first launch of the game
+
 After the first start of the game:
    * Select options, video options. Select the desired aspect ratio, screen resolution, fullscreen mode, set presets to quality, click apply
    * Then the options again, Execute Addon. Click to "GFX: Default quality" ("Default" for Second Encounter), and press ESC.
