@@ -39,33 +39,11 @@ MY_CONTENT="${WORKDIR}/SeriousSamClassic-${PV}/${MY_PN}"
 QA_TEXTRELS="
 usr/share/SamTFE/Mods/XPLUS/Bin/libEntities.so
 usr/share/SamTFE/Mods/XPLUS/Bin/libGame.so
-usr/share/SamTFE/Mods/XPLUS/BaseBrowseExclude.lst
-usr/share/SamTFE/Mods/XPLUS/BaseWriteInclude.lst
-usr/share/SamTFE/Mods/XPLUS/BaseBrowseInclude.lst
-usr/share/SamTFE/Mods/XPLUS/Textures/General/Grid16x16-dot.tex
-usr/share/SamTFE/Mods/XPLUS/Textures/General/Pointer.tex
-usr/share/SamTFE/Mods/XPLUS/Textures/Logo/sam_menulogo256b.tex
-usr/share/SamTFE/Mods/XPLUS/Textures/Logo/godgameslogo.tex
-usr/share/SamTFE/Mods/XPLUS/Textures/Logo/sam_menulogo256a.tex
-usr/share/SamTFE/Mods/XPLUS/Data/Var/ModName.var
-usr/share/SamTFE/Mods/XPLUS/Data/Var/DefaultPlayer.var
-usr/share/SamTFE/Mods/XPLUS/BaseWriteExclude.lst
 "
 
 QA_FLAGS_IGNORED="
 usr/share/SamTFE/Mods/XPLUS/Bin/libEntities.so
 usr/share/SamTFE/Mods/XPLUS/Bin/libGame.so
-usr/share/SamTFE/Mods/XPLUS/BaseBrowseExclude.lst
-usr/share/SamTFE/Mods/XPLUS/BaseWriteInclude.lst
-usr/share/SamTFE/Mods/XPLUS/BaseBrowseInclude.lst
-usr/share/SamTFE/Mods/XPLUS/Textures/General/Grid16x16-dot.tex
-usr/share/SamTFE/Mods/XPLUS/Textures/General/Pointer.tex
-usr/share/SamTFE/Mods/XPLUS/Textures/Logo/sam_menulogo256b.tex
-usr/share/SamTFE/Mods/XPLUS/Textures/Logo/godgameslogo.tex
-usr/share/SamTFE/Mods/XPLUS/Textures/Logo/sam_menulogo256a.tex
-usr/share/SamTFE/Mods/XPLUS/Data/Var/ModName.var
-usr/share/SamTFE/Mods/XPLUS/Data/Var/DefaultPlayer.var
-usr/share/SamTFE/Mods/XPLUS/BaseWriteExclude.lst
 "
 
 PATCHES=(
