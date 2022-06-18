@@ -70,7 +70,7 @@ src_install() {
 	rm -f "${D}/${dir}"/{*.exe,*.ex_,*.bmp,*.inx,*.hdr,*.bin,*.cab,*.ini,*.log} || die "Failed to remove windows cruft"
 
 	# Ensure that file datestamps from the CD are sane
-	find "${D}/${dir}" -exec touch '{}' \; || die "touch failed"
+	find "${D}/${dir}"/Levels -exec touch -d '09 May 2020 14:00' '{}' \; || die "touch failed"
 }
 
 pkg_postinst() {
