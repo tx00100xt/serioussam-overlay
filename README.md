@@ -12,6 +12,10 @@ Type this in your terminal:
 emerge layman 
 layman -o https://raw.githubusercontent.com/tx00100xt/serioussam-overlay/main/serioussam-overlay.xml -f -a serioussam
 ```
+or
+```
+eselect repository add serioussam git https://github.com/tx00100xt/serioussam-overlay.git
+```
 
 ### Ebuild's
 
@@ -50,6 +54,18 @@ After the first start of the game:
    * To save the game settings, permission to write to the file "Scripts/"PersistentSymbols.ini is required.
    * To save the gameplay, write permission to the "SaveGame/Player0" and "SaveGame/Player0/Quick" directories is required.
    * To record demos of the gameplay, permission to write to the "Demos" directory is required
+
+### Modification's
+
+To install XPLUS Modification type this in your terminal:
+```
+emerge serioussam-tfe-xplus serioussam-tse-xplus
+```
+
+To install Alpha Remake Modification type this in your terminal:
+```
+emerge serioussam-alpharemake
+```
 
 License
 -------
