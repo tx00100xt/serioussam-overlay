@@ -56,7 +56,6 @@ usr/share/SamTSE/Bin/ecc
 "
 
 PATCHES=(
-	"${FILESDIR}/vk_lost_headers.patch"
 	"${FILESDIR}/rparh_security_vk_2.patch"
 )
 
