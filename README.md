@@ -51,9 +51,7 @@ After the first start of the game:
 
 ### Saving game settings, saving gameplay, recording game demo:
 
-   * To save the game settings, permission to write to the file "Scripts/"PersistentSymbols.ini is required.
-   * To save the gameplay, write permission to the "SaveGame/Player0" and "SaveGame/Player0/Quick" directories is required.
-   * To record demos of the gameplay, permission to write to the "Demos" directory is required
+   * All saving game settings, controls, ,scores, saves, recorded demos, logs, in home directory ".local/share/Serious-Engine/..."
 
 ### Modification's
 

@@ -66,6 +66,7 @@ PATCHES=(
 	"${FILESDIR}/fixed_broken_timer.patch"
 	"${FILESDIR}/fixed_validation_layers.patch"
 	"${FILESDIR}/critical_section_multitread.patch"
+	"${FILESDIR}/user_data_in_home_dir.patch"
 )
 
 src_configure() {
