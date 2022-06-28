@@ -65,6 +65,26 @@ To install Alpha Remake Modification type this in your terminal:
 emerge serioussam-alpharemake
 ```
 
+To install OddWorld Modification type this in your terminal:
+```
+emerge serioussam-oddworld
+```
+
+To install DancesWorld Modification type this in your terminal:
+```
+emerge serioussam-dancesworld
+```
+
+To install Parse Error Modification type this in your terminal:
+```
+emerge serioussam-pefe2q serioussam-pese2q
+```
+
+To install Nightmare Tower Modification type this in your terminal:
+```
+emerge serioussam-tower
+```
+
 License
 -------
 
