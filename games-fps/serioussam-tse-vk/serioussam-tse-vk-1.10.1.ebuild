@@ -67,6 +67,7 @@ PATCHES=(
 	"${FILESDIR}/fixed_validation_layers.patch"
 	"${FILESDIR}/critical_section_multitread.patch"
 	"${FILESDIR}/user_data_in_home_dir.patch"
+	"${FILESDIR}/gcc-11.3_fixed_mod_startup.patch"
 )
 
 src_configure() {

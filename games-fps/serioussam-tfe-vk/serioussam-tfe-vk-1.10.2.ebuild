@@ -56,6 +56,7 @@ usr/share/SamTFE/Bin/ecc
 
 PATCHES=(
 	"${FILESDIR}/rparh_security_vk_2.patch"
+	"${FILESDIR}/gcc-11.3_fixed_mod_startup.patch"
 )
 
 src_configure() {
