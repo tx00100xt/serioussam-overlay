@@ -14,7 +14,9 @@ layman -o https://raw.githubusercontent.com/tx00100xt/serioussam-overlay/main/se
 ```
 or
 ```
+emerge eselect-repository
 eselect repository add serioussam git https://github.com/tx00100xt/serioussam-overlay.git
+emaint sync --repo foo serioussam
 ```
 
 ### Ebuild's
