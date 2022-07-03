@@ -16,7 +16,7 @@ or
 ```
 emerge eselect-repository
 eselect repository add serioussam git https://github.com/tx00100xt/serioussam-overlay.git
-emaint sync --repo foo serioussam
+emaint sync --repo serioussam
 ```
 
 ### Ebuild's
