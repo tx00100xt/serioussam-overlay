@@ -13,7 +13,6 @@ EGIT_REPO_URI="https://github.com/tx00100xt/SeriousSamClassic-VK.git"
 
 LICENSE="GPL-2"
 SLOT="0"
-KEYWORDS="~amd64 ~x86"
 RESTRICT="bindist mirror"
 IUSE=""
 

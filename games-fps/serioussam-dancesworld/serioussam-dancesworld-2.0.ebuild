@@ -21,7 +21,7 @@ RESTRICT="bindist mirror"
 IUSE=""
 
 RDEPEND="
-    || ( games-fps/serioussam-tfe-vk games-fps/serioussam-tfe )
+    || ( games-fps/serioussam-tse-vk games-fps/serioussam-tse )
 	media-libs/libsdl2[alsa,video,joystick,opengl]
 	media-libs/libvorbis
     sys-libs/zlib

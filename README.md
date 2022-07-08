@@ -87,6 +87,13 @@ To install Nightmare Tower Modification type this in your terminal:
 emerge serioussam-tower
 ```
 
+### Metapackage's
+
+You can use metapackage for Serious Sam The First Encounte and Serious Sam The Second Encounter.
+```
+emerge serioussam-tfe-meta serioussam-tse-meta
+```
+
 License
 -------
 
