@@ -18,7 +18,7 @@ OddWorld_ARC="SamTFE-OddWorld.tar.xz"
 
 LICENSE="GPL-2"
 SLOT="0"
-KEYWORDS="amd64 ~x86"
+KEYWORDS="~amd64 ~x86"
 RESTRICT="bindist mirror"
 IUSE=""
 

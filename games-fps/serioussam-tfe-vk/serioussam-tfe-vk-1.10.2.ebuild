@@ -13,7 +13,7 @@ SRC_URI="https://github.com/tx00100xt/SeriousSamClassic-VK/archive/refs/tags/v${
 
 LICENSE="GPL-2"
 SLOT="0"
-KEYWORDS="amd64 ~x86"
+KEYWORDS="~amd64 ~x86"
 RESTRICT="bindist mirror"
 IUSE=""
 

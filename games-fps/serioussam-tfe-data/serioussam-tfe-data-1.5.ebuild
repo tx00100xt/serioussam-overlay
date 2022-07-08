@@ -22,7 +22,7 @@ S="${WORKDIR}"
 
 LICENSE="LOKI-EULA"
 SLOT="0"
-KEYWORDS="amd64 ~x86"
+KEYWORDS="~amd64 ~x86"
 IUSE="ru"
 
 DEPEND="|| ( games-fps/serioussam-tfe-vk games-fps/serioussam-tfe )"
