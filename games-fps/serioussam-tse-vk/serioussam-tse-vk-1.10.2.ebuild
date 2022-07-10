@@ -90,7 +90,12 @@ src_install() {
 
     cp "${FILESDIR}/serioussam-tse.sh" "${D}/${dir}"
     cp "${FILESDIR}/ssam.xpm" "${D}/${dir}"
-	insinto /usr/share
+
+    # fix scripts for AMD cards
+    sed -i 's/mdl_bFineQuality = 0;/mdl_bFineQuality = 1;/g' "${D}/${dir}"/Scripts/GLSettings/RAM.ini
+    sed -i 's/mdl_bFineQuality = 0;/mdl_bFineQuality = 1;/g' "${D}/${dir}"/Scripts/GLSettings/ATI-RPRO.ini
+
+    insinto /usr/share
 
     cd "${D}/${dir}"
     newicon ssam.xpm ${MY_PN}.xpm
