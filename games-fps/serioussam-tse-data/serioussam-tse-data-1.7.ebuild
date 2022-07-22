@@ -6,13 +6,12 @@ EAPI=7
 inherit cdrom eutils unpacker
 
 MY_PN="SamTSE"
-
-PATCH_PACKAGE="secondencounterpatch107_usa.exe"
+PATCH_PREFIX="Patch_1.07_SE"
 
 DESCRIPTION="Croteam's Serious Sam Classic The Second Encounter ... the data files"
 HOMEPAGE="http://www.croteam.com/
 	https://store.steampowered.com/app/41060/Serious_Sam_Classic_The_Second_Encounter/"
-SRC_URI="http://www.cngwireless.net/apps/Game%20Patches/${PATCH_PACKAGE}"
+SRC_URI="https://github.com/tx00100xt/serioussam-mods/raw/main/Patches/${PATCH_PREFIX}.tar.xz"
 
 S="${WORKDIR}"
 
@@ -21,8 +20,7 @@ SLOT="0"
 KEYWORDS="~amd64 ~x86"
 IUSE="ru"
 
-DEPEND="|| ( games-fps/serioussam-tse-vk games-fps/serioussam-tse )
-	app-arch/p7zip"
+DEPEND="|| ( games-fps/serioussam-tse-vk games-fps/serioussam-tse )"
 
 S=${WORKDIR}
 
@@ -32,7 +30,8 @@ pkg_setup() {
 
 src_unpack() {
 	mkdir Levels Mods
-	7z x "${DISTDIR}"/"${PATCH_PACKAGE}"
+	cat "${DISTDIR}/${PATCH_PREFIX}.tar.xz" > "${PATCH_PREFIX}.tar.xz"
+	unpack "${WORKDIR}/${PATCH_PREFIX}.tar.xz"
 }
 
 src_install() {
@@ -42,7 +41,7 @@ src_install() {
 	insinto "${dir}"
 	doins -r "${CDROM_ROOT}"/Install/*
 
-    mv "${WORKDIR}"/Disk1/*.gro "${D}/${dir}" || die "failed to moved patch 1.05"
+    mv "${WORKDIR}"/*.gro "${D}/${dir}" || die "failed to moved patch 1.07"
     mv "${D}/${dir}"/Scripts/PersistentSymbols.ini "${WORKDIR}" || die "failed to moved PersistentSymbols.ini"
 
 	rm -rf "${D}/${dir}"/Bin || die "failed to removed stuff"
