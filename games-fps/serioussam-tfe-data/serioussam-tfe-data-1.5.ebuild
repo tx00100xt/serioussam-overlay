@@ -5,7 +5,8 @@ EAPI=7
 
 inherit cdrom eutils unpacker
 
-MY_PN="SamTFE"
+# Game name
+GN="serioussam-tfe"
 
 LOKI_PACKAGE="ssam-tfe-lnx-beta1a.run"
 # mirror
@@ -22,7 +23,7 @@ S="${WORKDIR}"
 
 LICENSE="LOKI-EULA"
 SLOT="0"
-KEYWORDS="~amd64 ~x86"
+KEYWORDS="~amd64 ~x86 ~arm64"
 IUSE="ru"
 
 DEPEND="|| ( games-fps/serioussam-tfe-vk games-fps/serioussam-tfe )"
@@ -39,7 +40,7 @@ src_unpack() {
 }
 
 src_install() {
-	local dir="/usr/share/${MY_PN}"
+	local dir="/usr/share/${GN}"
 
 	einfo "Copying from ${CDROM_ROOT}"
 	insinto "${dir}"

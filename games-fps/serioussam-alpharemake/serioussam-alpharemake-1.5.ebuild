@@ -1,25 +1,28 @@
-# Copyright 1999-2021 Gentoo Authors
+# Copyright 1999-2022 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=7
 
 inherit cmake
 
-MY_PN="SamTFE"
+MY_PN="serioussam"
+MY_MOD="SSA"
+# Game name
+GN="serioussam-tfe"
 
 DESCRIPTION="Serious Sam Classic The First Encounter Alpha Remake Modification"
 HOMEPAGE="https://github.com/tx00100xt/SeriousSamAlphaRemake"
 SRC_URI="https://github.com/tx00100xt/SeriousSamAlphaRemake/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz
-	https://github.com/tx00100xt/serioussam-mods/raw/main/SamTFE-SSA/SeriousSamAlphaRemake_v1.5.tar.xz.partaa
-	https://github.com/tx00100xt/serioussam-mods/raw/main/SamTFE-SSA/SeriousSamAlphaRemake_v1.5.tar.xz.partab
-	https://github.com/tx00100xt/serioussam-mods/raw/main/SamTFE-SSA/SeriousSamAlphaRemake_v1.5.tar.xz.partac
-	https://github.com/tx00100xt/serioussam-mods/raw/main/SamTFE-SSA/SeriousSamAlphaRemake_v1.5.tar.xz.partad"
+	https://github.com/tx00100xt/${MY_PN}-mods/raw/main/SamTFE-${MY_MOD}/SeriousSamAlphaRemake_v1.5.tar.xz.partaa
+	https://github.com/tx00100xt/${MY_PN}-mods/raw/main/SamTFE-${MY_MOD}/SeriousSamAlphaRemake_v1.5.tar.xz.partab
+	https://github.com/tx00100xt/${MY_PN}-mods/raw/main/SamTFE-${MY_MOD}/SeriousSamAlphaRemake_v1.5.tar.xz.partac
+	https://github.com/tx00100xt/${MY_PN}-mods/raw/main/SamTFE-${MY_MOD}/SeriousSamAlphaRemake_v1.5.tar.xz.partad"
 
-SSA_ARC="SeriousSamAlphaRemake_v1.5.tar.xz"
+MY_MOD_ARC="SeriousSamAlphaRemake_v1.5.tar.xz"
 
 LICENSE="GPL-2"
 SLOT="0"
-KEYWORDS="~amd64 ~x86"
+KEYWORDS="~amd64 ~x86 ~arm64"
 RESTRICT="bindist mirror"
 IUSE=""
 
@@ -35,46 +38,77 @@ DEPEND="${RDEPEND}"
 BDEPEND="virtual/pkgconfig"
 
 S="${WORKDIR}/SeriousSamAlphaRemake-${PV}/Sources"
-MY_CONTENT="${WORKDIR}/SeriousSamAlphaRemake-${PV}/${MY_PN}"
+MY_CONTENT="${WORKDIR}/SeriousSamAlphaRemake-${PV}/SamTFE"
 
 QA_TEXTRELS="
-usr/share/SamTFE/Mods/SSA/Bin/libEntities.so
-usr/share/SamTFE/Mods/SSA/Bin/libGame.so
+usr/lib/${GN}/Mods/${MY_MOD}/libEntities.so
+usr/lib/${GN}/Mods/${MY_MOD}/libGame.so
+usr/lib64/${GN}/Mods/${MY_MOD}/libEntities.so
+usr/lib64/${GN}/Mods/${MY_MOD}/libGame.so
 "
 
 QA_FLAGS_IGNORED="
-usr/share/SamTFE/Mods/SSA/Bin/libEntities.so
-usr/share/SamTFE/Mods/SSA/Bin/libGame.so
+usr/lib/${GN}/Mods/${MY_MOD}/libEntities.so
+usr/lib/${GN}/Mods/${MY_MOD}/libGame.so
+usr/lib64/${GN}/Mods/${MY_MOD}/libEntities.so
+usr/lib64/${GN}/Mods/${MY_MOD}/libGame.s
 "
 
 src_configure() {
     einfo "Setting build type Release..."
     CMAKE_BUILD_TYPE="Release"
-	local mycmakeargs=(
-		-DTFE=TRUE
-	)
-	cmake_src_configure
+    if use arm64
+    then
+        local mycmakeargs=(
+            -DTFE=TRUE
+            -DRPI4=TRUE
+        )
+    else
+        local mycmakeargs=(
+            -DTFE=TRUE
+        )
+    fi
+    cmake_src_configure
 }
 
 src_install() {
-    local dir="/usr/share/${MY_PN}"
+    local dir="/usr/share/${GN}"
+    if use x86; then
+        local libdir="/usr/lib"
+    else
+        local libdir="/usr/lib64"
+    fi
 
     # crerate install dirs
-    mkdir "${D}/usr" && mkdir "${D}/usr/share" && mkdir "${D}/usr/bin"
-
+    mkdir "${D}/usr" && mkdir "${D}/usr/share" mkdir "${D}${libdir}"
+    for gamedir in ${GN} ${GN}/Mods ${GN}/Mods/${MY_MOD}
+    do
+        mkdir "${D}${libdir}/${gamedir}" || die "Failed to create mod dir"
+    done
     mkdir "${D}${dir}"
-    cat "${DISTDIR}/${SSA_ARC}".part* > "${SSA_ARC}"
-    unpack ./"${SSA_ARC}"
-    mv Mods "${D}${dir}" || die "Failed to moved mod content"
 
-    # moving libs 
-    mv "${BUILD_DIR}"/Debug/libEntities.so "${D}${dir}"/Mods/SSA/Bin || die "Failed to moved libEntities.so"
-    mv "${BUILD_DIR}"/Debug/libGame.so "${D}${dir}"/Mods/SSA/Bin || die "Failed to moved libGame.so"
+    # unpack mod content
+    cat "${DISTDIR}/${MY_MOD_ARC}".part* > "${MY_MOD_ARC}"
+    unpack ./"${MY_MOD_ARC}"
+    mv Mods "${D}${dir}" || die "Failed to moved mod content"
+    cp -fr "${dir}"/Scripts/CustomOptions/GFX-AdvancedRendering.cfg "${D}${dir}/Mods/${MY_MOD}"/Scripts/CustomOptions || die "Failed to copy "
+    cp -fr "${dir}"/Scripts/CustomOptions/GFX-RenderingOptions.cfg "${D}${dir}/Mods/${MY_MOD}"/Scripts/CustomOptions || die "Failed to copy "
+
+    # moving libs
+    if use x86; then
+        mv "${BUILD_DIR}"/Debug/libEntities.so "${D}/usr/lib/${GN}/Mods/${MY_MOD}" || die "Failed to moved libEntities.so"
+        mv "${BUILD_DIR}"/Debug/libGame.so "${D}/usr/lib/${GN}/Mods/${MY_MOD}" || die "Failed to moved libGame.so"
+        dosym "/usr/lib/${GN}/libamp11lib.so" "/usr/lib/${GN}/Mods/${MY_MOD}/libamp11lib.so"
+    else
+        mv "${BUILD_DIR}"/Debug/libEntities.so "${D}/usr/lib64/${GN}/Mods/${MY_MOD}" || die "Failed to moved libEntities.so"
+        mv "${BUILD_DIR}"/Debug/libGame.so "${D}/usr/lib64/${GN}/Mods/${MY_MOD}" || die "Failed to moved libGame.so"
+        dosym "/usr/lib64/${GN}/libamp11lib.so" "/usr/lib64/${GN}/Mods/${MY_MOD}/libamp11lib.so"
+    fi
     # removing temp stuff
 	rm -f  "${BUILD_DIR}"/{*.cmake,*.txt,*.a,*.ninja,.gitkeep} || die "Failed to removed temp stuff"
     rm -fr "${BUILD_DIR}"/Debug && rm -fr "${BUILD_DIR}"/CMakeFiles && rm -fr "${MY_CONTENT}"
 
-	insinto /usr/share
+	insinto /usr
 
 }
 

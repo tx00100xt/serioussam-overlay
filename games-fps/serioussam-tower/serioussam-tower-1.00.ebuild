@@ -1,22 +1,25 @@
-# Copyright 1999-2021 Gentoo Authors
+# Copyright 1999-2022 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=7
 
 inherit cmake
 
-MY_PN="SamTFE"
+MY_PN="serioussam"
+MY_MOD="Tower"
+# Game name
+GN="serioussam-tfe"
 
 DESCRIPTION="Serious Sam Classic Nightmare Tower Modification"
 HOMEPAGE="https://github.com/tx00100xt/SE1-TFE-Tower"
-SRC_URI="https://github.com/tx00100xt/SE1-TFE-Tower/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz
-	https://github.com/tx00100xt/serioussam-mods/raw/main/SamTFE-Tower/SamTFE-Tower.tar.xz"
+SRC_URI="https://github.com/tx00100xt/SE1-TFE-${MY_MOD}/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz
+	https://github.com/tx00100xt/serioussam-mods/raw/main/SamTFE-${MY_MOD}/SamTFE-${MY_MOD}.tar.xz"
 
-TOWER_ARC="SamTFE-Tower.tar.xz"
+MY_MOD_ARC="SamTFE-${MY_MOD}.tar.xz"
 
 LICENSE="GPL-2"
 SLOT="0"
-KEYWORDS="~amd64 ~x86"
+KEYWORDS="~amd64 ~x86 ~arm64"
 RESTRICT="bindist mirror"
 IUSE=""
 
@@ -31,45 +34,76 @@ RDEPEND="
 DEPEND="${RDEPEND}"
 BDEPEND="virtual/pkgconfig"
 
-S="${WORKDIR}/SE1-TFE-Tower-${PV}/Sources"
-MY_CONTENT="${WORKDIR}/SE1-TFE-Tower-${PV}/${MY_PN}"
+S="${WORKDIR}/SE1-TFE-${MY_MOD}-${PV}/Sources"
+MY_CONTENT="${WORKDIR}/SE1-TFE-${MY_MOD}-${PV}/${MY_PN}"
 
 QA_TEXTRELS="
-usr/share/SamTFE/Mods/Tower/Bin/libEntities.so
-usr/share/SamTFE/Mods/Tower/Bin/libGame.so
+usr/lib/${GN}/Mods/${MY_MOD}/libEntities.so
+usr/lib/${GN}/Mods/${MY_MOD}/libGame.so
+usr/lib64/${GN}/Mods/${MY_MOD}/libEntities.so
+usr/lib64/${GN}/Mods/${MY_MOD}/libGame.so
 "
 
 QA_FLAGS_IGNORED="
-usr/share/SamTFE/Mods/Tower/Bin/libEntities.so
-usr/share/SamTFE/Mods/Tower/Bin/libGame.so
+usr/lib/${GN}/Mods/${MY_MOD}/libEntities.so
+usr/lib/${GN}/Mods/${MY_MOD}/libGame.so
+usr/lib64/${GN}/Mods/${MY_MOD}/libEntities.so
+usr/lib64/${GN}/Mods/${MY_MOD}/libGame.so
 "
 
 src_configure() {
     einfo "Setting build type Release..."
     CMAKE_BUILD_TYPE="Release"
-	local mycmakeargs=(
-		-DTFE=TRUE
-	)
-	cmake_src_configure
+    if use arm64
+    then
+        local mycmakeargs=(
+            -DTFE=TRUE
+            -DRPI4=TRUE
+        )
+    else
+        local mycmakeargs=(
+            -DTFE=TRUE
+        )
+    fi
+    cmake_src_configure
 }
 
 src_install() {
-    local dir="/usr/share/${MY_PN}"
+    local dir="/usr/share/${GN}"
+    if use x86; then
+        local libdir="/usr/lib"
+    else
+        local libdir="/usr/lib64"
+    fi
 
     # crerate install dirs
-    mkdir "${D}/usr" && mkdir "${D}/usr/share" && mkdir "${D}/usr/bin"
-
+    mkdir "${D}/usr" && mkdir "${D}/usr/share" mkdir "${D}${libdir}"
+    for gamedir in ${GN} ${GN}/Mods ${GN}/Mods/${MY_MOD}
+    do
+        mkdir "${D}${libdir}/${gamedir}" || die "Failed to create mod dir"
+    done
     mkdir "${D}${dir}"
-    mv "${WORKDIR}"/Mods "${D}${dir}" || die "Failed to moved mod content"
 
-    # moving libs 
-    mv "${BUILD_DIR}"/Debug/libEntities.so "${D}${dir}"/Mods/Tower/Bin || die "Failed to moved libEntities.so"
-    mv "${BUILD_DIR}"/Debug/libGame.so "${D}${dir}"/Mods/Tower/Bin || die "Failed to moved libGame.so"
+    # unpack mod content
+    cat "${DISTDIR}/${MY_MOD_ARC}" > "${MY_MOD_ARC}"
+    unpack ./"${MY_MOD_ARC}"
+    mv Mods "${D}${dir}" || die "Failed to moved mod content"
+
+    # moving libs
+    if use x86; then
+        mv "${BUILD_DIR}"/Debug/libEntities.so "${D}/usr/lib/${GN}/Mods/${MY_MOD}" || die "Failed to moved libEntities.so"
+        mv "${BUILD_DIR}"/Debug/libGame.so "${D}/usr/lib/${GN}/Mods/${MY_MOD}" || die "Failed to moved libGame.so"
+        dosym "/usr/lib/${GN}/libamp11lib.so" "/usr/lib/${GN}/Mods/${MY_MOD}/libamp11lib.so"
+    else
+        mv "${BUILD_DIR}"/Debug/libEntities.so "${D}/usr/lib64/${GN}/Mods/${MY_MOD}" || die "Failed to moved libEntities.so"
+        mv "${BUILD_DIR}"/Debug/libGame.so "${D}/usr/lib64/${GN}/Mods/${MY_MOD}" || die "Failed to moved libGame.so"
+        dosym "/usr/lib64/${GN}/libamp11lib.so" "/usr/lib64/${GN}/Mods/${MY_MOD}/libamp11lib.so"
+    fi
     # removing temp stuff
 	rm -f  "${BUILD_DIR}"/{*.cmake,*.txt,*.a,*.ninja,.gitkeep} || die "Failed to removed temp stuff"
     rm -fr "${BUILD_DIR}"/Debug && rm -fr "${BUILD_DIR}"/CMakeFiles && rm -fr "${MY_CONTENT}"
 
-	insinto /usr/share
+	insinto /usr
 
 }
 

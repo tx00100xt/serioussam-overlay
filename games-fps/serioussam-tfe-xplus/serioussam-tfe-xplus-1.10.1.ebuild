@@ -6,6 +6,8 @@ EAPI=7
 inherit cmake
 
 MY_PN="SamTFE"
+# Game name
+GN="serioussam-tfe"
 
 DESCRIPTION="Serious Sam Classic The First Encounter XPLUS Modification"
 HOMEPAGE="https://github.com/tx00100xt/SeriousSamClassic"
@@ -18,7 +20,7 @@ XPLUS_ARC="SamTFE-XPLUS.tar.xz"
 
 LICENSE="GPL-2"
 SLOT="0"
-KEYWORDS="~amd64 ~x86"
+KEYWORDS="~amd64 ~x86 ~arm64"
 RESTRICT="bindist mirror"
 IUSE=""
 
@@ -37,13 +39,17 @@ S="${WORKDIR}/SeriousSamClassic-${PV}/${MY_PN}/Sources"
 MY_CONTENT="${WORKDIR}/SeriousSamClassic-${PV}/${MY_PN}"
 
 QA_TEXTRELS="
-usr/share/SamTFE/Mods/XPLUS/Bin/libEntities.so
-usr/share/SamTFE/Mods/XPLUS/Bin/libGame.so
+usr/lib/${GN}/Mods/XPLUS/Bin/libEntities.so
+usr/lib/${GN}/XPLUS/Bin/libGame.so
+usr/lib64/${GN}/Mods/XPLUS/Bin/libEntities.so
+usr/lib64/${GN}/XPLUS/Bin/libGame.so
 "
 
 QA_FLAGS_IGNORED="
-usr/share/SamTFE/Mods/XPLUS/Bin/libEntities.so
-usr/share/SamTFE/Mods/XPLUS/Bin/libGame.so
+usr/lib/${GN}/Mods/XPLUS/Bin/libEntities.so
+usr/lib/${GN}/XPLUS/Bin/libGame.so
+usr/lib64/${GN}/Mods/XPLUS/Bin/libEntities.so
+usr/lib64/${GN}/XPLUS/Bin/libGame.so
 "
 
 PATCHES=(
@@ -56,39 +62,62 @@ PATCHES=(
 
 src_configure() {
     einfo "Choosing the player's xplus weapon..."
-	rm -f "${MY_CONTENT}/Sources/Entities/PlayerWeapons.es" || die "Failed to removed PlayerWeapons.es"
-    mv "${MY_CONTENT}/Sources/Entities/PlayerWeaponsHD.es" "${MY_CONTENT}/Sources/Entities/PlayerWeapons.es" || die "Failed to moved PlayerWeapons.es"
+    rm -f "${S}"/Sources/Entities/PlayerWeapons.es || die "Failed to removed PlayerWeapons.es"
+    mv "${S}"/Entities/PlayerWeaponsHD.es "${S}"/Entities/PlayerWeapons.es || die "Failed to moved PlayerWeapons.es"
 
     einfo "Setting build type Release..."
     CMAKE_BUILD_TYPE="Release"
-	local mycmakeargs=(
-		-DTFE=TRUE
-	)
-	cmake_src_configure
+    if use arm64
+    then
+        local mycmakeargs=(
+            -DTFE=TRUE
+            -DRPI4=TRUE
+        )
+    else
+        local mycmakeargs=(
+            -DTFE=TRUE
+        )
+    fi
+    cmake_src_configure
 }
 
 src_install() {
-    local dir="/usr/share/${MY_PN}"
+    local dir="/usr/share/${GN}"
 
     # crerate install dirs
-    mkdir "${D}/usr" && mkdir "${D}/usr/share" && mkdir "${D}/usr/bin"
+    mkdir "${D}/usr" && mkdir "${D}/usr/share" && mkdir "${D}${dir}"
+	if use x86; then
+    	mkdir "${D}/usr/lib" && mkdir "${D}/usr/lib/${GN}"  && mkdir "${D}/usr/lib/${GN}/Mods"
+    else
+    	mkdir "${D}/usr/lib64" && mkdir "${D}/usr/lib64/${GN}"  && mkdir "${D}/usr/lib64/${GN}/Mods"
+    fi
+
+    # moving libs
+ 	if use x86; then
+        mkdir "${D}/usr/lib/${GN}/Mods/XPLUS"
+        mv "${BUILD_DIR}"/Debug/libEntities.so "${D}/usr/lib/${GN}/Mods/XPLUS" || die "Failed to moved libEntities.so"
+        mv "${BUILD_DIR}"/Debug/libGame.so "${D}/usr/lib/${GN}/Mods/XPLUS" || die "Failed to moved libGame.so"
+        dosym "/usr/lib/${GN}/libamp11lib.so" "/usr/lib/${GN}/Mods/XPLUS/libamp11lib.so"
+    else
+    	mkdir "${D}/usr/lib64/${GN}/Mods/XPLUS"
+        mv "${BUILD_DIR}"/Debug/libEntities.so "${D}/usr/lib64/${GN}/Mods/XPLUS" || die "Failed to moved libEntities.so"
+        mv "${BUILD_DIR}"/Debug/libGame.so "${D}/usr/lib64/${GN}/Mods/XPLUS" || die "Failed to moved libGame.so"
+        dosym "/usr/lib64/${GN}/libamp11lib.so" "/usr/lib64/${GN}/Mods/XPLUS/libamp11lib.so"
+    fi
 
     mkdir "${D}${dir}"
     cat "${DISTDIR}/${XPLUS_ARC}".part* > "${XPLUS_ARC}"
     unpack ./"${XPLUS_ARC}"
-    mv Mods "${D}${dir}" || die "Failed to moved mod content"
+    # moving xplus 
+    mv "${S}"/Mods "${D}${dir}" || die "Failed to moved XPLUS content"
 
-    # moving libs 
-    mv "${BUILD_DIR}"/Debug/libEntities.so "${D}${dir}"/Mods/XPLUS/Bin || die "Failed to moved libEntities.so"
-    mv "${BUILD_DIR}"/Debug/libGame.so "${D}${dir}"/Mods/XPLUS/Bin || die "Failed to moved libGame.so"
     # removing temp stuff
 	rm -f  "${BUILD_DIR}"/{*.cmake,*.txt,*.a,*.ninja,.gitkeep} || die "Failed to removed temp stuff"
     rm -fr "${BUILD_DIR}"/Debug && rm -fr "${BUILD_DIR}"/CMakeFiles && rm -fr "${MY_CONTENT}"
 	rm -f  "${D}${dir}"/Mods/XPLUS.des || die "Failed to removed temp stuff"
     rm -f  "${D}${dir}"/Mods/XPLUSTbn.tex || die "Failed to removed temp stuff"
 
-	insinto /usr/share
-
+	insinto /usr
 }
 
 pkg_postinst() {

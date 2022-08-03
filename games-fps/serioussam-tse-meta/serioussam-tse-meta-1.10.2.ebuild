@@ -8,7 +8,7 @@ if [[ ${PV} == 9999 ]]; then
 else
 	inherit eapi7-ver
 	SSAM_BRANCH="${PV}"
-	KEYWORDS="~amd64 ~x86"
+	KEYWORDS="~amd64 ~x86 ~arm64"
 fi
 
 DESCRIPTION="Meta package for Serious Sam Classic and Mods"

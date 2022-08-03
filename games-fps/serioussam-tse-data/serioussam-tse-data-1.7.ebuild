@@ -5,8 +5,9 @@ EAPI=7
 
 inherit cdrom eutils unpacker
 
-MY_PN="SamTSE"
 PATCH_PREFIX="Patch_1.07_SE"
+# Game name
+GN="serioussam-tse"
 
 DESCRIPTION="Croteam's Serious Sam Classic The Second Encounter ... the data files"
 HOMEPAGE="http://www.croteam.com/
@@ -17,7 +18,7 @@ S="${WORKDIR}"
 
 LICENSE="all-rights-reserved"
 SLOT="0"
-KEYWORDS="~amd64 ~x86"
+KEYWORDS="~amd64 ~x86 ~arm64"
 IUSE="ru"
 
 DEPEND="|| ( games-fps/serioussam-tse-vk games-fps/serioussam-tse )"
@@ -35,7 +36,7 @@ src_unpack() {
 }
 
 src_install() {
-	local dir="/usr/share/${MY_PN}"
+	local dir="/usr/share/${GN}"
 
 	einfo "Copying from ${CDROM_ROOT}"
 	insinto "${dir}"

@@ -1,0 +1,179 @@
+diff -aurN a/CMakeLists.txt b/CMakeLists.txt
+--- a/CMakeLists.txt	2022-07-06 16:04:47.399909504 +0300
++++ b/CMakeLists.txt	2022-07-13 19:24:05.763613459 +0300
+@@ -961,7 +961,7 @@
+     ${ADDITIONAL_ENGINE_SRCS}
+     ${ZLIB_SRCS}
+ )
+-set(ENGINELIB "Engine${DEBUGSUFFIX}")
++set(ENGINELIB "Engine${MP}${DEBUGSUFFIX}")
+ add_library(${ENGINELIB} SHARED
+      ${ENGINE_SRCS}
+ )
+diff -aurN a/Engine/Base/Stream.cpp b/Engine/Base/Stream.cpp
+--- a/Engine/Base/Stream.cpp	2022-07-06 16:04:47.406576185 +0300
++++ b/Engine/Base/Stream.cpp	2022-07-14 10:41:24.717795827 +0300
+@@ -1619,6 +1619,11 @@
+     }
+   }
+ 
++  if( _pShell->GetINDEX("sys_iSysPath") == 1 && fnmFileAbsolute.FileExt()==".so" ) {
++    _fnmApplicationPathTMP = _fnmModLibPath;
++    fnmFileAbsolute = fnmFileAbsolute.FileName() + fnmFileAbsolute.FileExt();
++  }
++
+ //#######################################################################################################################
+ 
+   // if writing
+diff -aurN a/Engine/Base/Unix/UnixDynamicLoader.cpp b/Engine/Base/Unix/UnixDynamicLoader.cpp
+--- a/Engine/Base/Unix/UnixDynamicLoader.cpp	2022-07-06 16:04:47.406576185 +0300
++++ b/Engine/Base/Unix/UnixDynamicLoader.cpp	2022-07-13 20:23:37.304414112 +0300
+@@ -67,7 +67,14 @@
+     #ifdef PLATFORM_FREEBSD
+     dlerror(); // need for clean Undefined symbol "_nss_cache_cycle_prevention_function" message
+     #endif
+-    module = ::dlopen(lib, RTLD_LAZY | RTLD_GLOBAL);
++
++    CTFileName fnmLib = CTString(lib);
++    CTFileName fnmLibname = fnmLib.FileName();
++    int _libvorbisfile   = strncmp((const char *)fnmLibname, (const char *) "libvorbisfile", (size_t) 13 ); // skip
++    if( _pShell->GetINDEX("sys_iSysPath") == 1 && _libvorbisfile !=0 ) {
++        fnmLib = _fnmModLibPath + _fnmMod + fnmLib.FileName() + fnmLib.FileExt();
++    }
++    module = ::dlopen((const char *)fnmLib, RTLD_LAZY | RTLD_GLOBAL);
+     SetError();
+ }
+ 
+diff -aurN a/Engine/Engine.cpp b/Engine/Engine.cpp
+--- a/Engine/Engine.cpp	2022-07-06 16:04:47.409909525 +0300
++++ b/Engine/Engine.cpp	2022-07-14 16:34:31.888105791 +0300
+@@ -47,6 +47,7 @@
+ 
+ #if PLATFORM_UNIX
+ #include "SDL.h"
++#include <limits.h>
+ #endif
+ 
+ // this version string can be referenced from outside the engine
+@@ -57,6 +58,7 @@
+ ENGINE_API BOOL _bDedicatedServer = FALSE;
+ ENGINE_API BOOL _bWorldEditorApp  = FALSE;
+ ENGINE_API CTString _strLogFile = "";
++ENGINE_API CTFileName _fnmModLibPath;
+ 
+ // global handle for application windows
+ // !!! FIXME rcg10072001 this needs to be abstracted.
+@@ -103,6 +105,10 @@
+ static CTString sys_strModName = "";
+ static CTString sys_strModExt  = "";
+ 
++// Path vars
++static INDEX sys_iGameBits = 0;
++ENGINE_API INDEX sys_iSysPath = 0;
++
+ // enables paranoia checks for allocation array
+ BOOL _bAllocationArrayParanoiaCheck = FALSE;
+ 
+@@ -594,9 +600,39 @@
+   CPrintF(TRANSV("--- Serious Engine Startup ---\n"));
+   CPrintF("  %s\n\n", (const char *) _strEngineBuild);
+ 
++  // Path vars
++  sys_iGameBits  = (int)(CHAR_BIT * sizeof(void *));
++  CPrintF(TRANSV("Running %d version\n"), sys_iGameBits);
++
++  int _isystempath = strncmp((const char *)strExePath, (const char *) "/usr/bin/", (size_t) 9 );
++  if( _isystempath == 0 ) {
++       sys_iSysPath = 1; // using system path
++  } else {
++       sys_iSysPath = 0; // using standarted path
++  }
++
++  // get library path for mods
++  _fnmModLibPath = "";
++  if( sys_iSysPath == 1 && sys_iGameBits == 64 && _pFileSystem->IsDirectory((const char *) "/usr/lib/x86_64-linux-gnu")) {
++    _fnmModLibPath = "/usr/lib/x86_64-linux-gnu/" + strGameID + "/"; 
++  } else if( sys_iSysPath == 1 && sys_iGameBits == 32 && _pFileSystem->IsDirectory((const char *) "/usr/lib/i386-linux-gnu")) {
++    _fnmModLibPath = "/usr/lib/i386-linux-gnu/" + strGameID + "/";
++  } else if( sys_iSysPath == 1 && sys_iGameBits == 64 && _pFileSystem->IsDirectory((const char *) "/usr/lib64")) {
++    _fnmModLibPath = "/usr/lib64/" + strGameID + "/";
++  } else if( sys_iSysPath == 1 && sys_iGameBits == 32 && _pFileSystem->IsDirectory((const char *) "/usr/lib")) {
++    _fnmModLibPath = "/usr/lib/" + strGameID + "/";
++  } else {
++    _fnmModLibPath = _fnmApplicationPath;
++  }
++
++  if( sys_iSysPath == 1 ) {
++    _fnmApplicationPath = "/usr/share/" + strGameID + "/"; // all game data
++  }
++
+   // print info on the started application
+-  CPrintF(TRANSV("Executable: %s\n"), strExePath);
+-  CPrintF(TRANSV("Assumed engine directory: %s\n"), (const char *) _fnmApplicationPath);
++  CPrintF(TRANSV("Executable: %s\n"), (const char *) strExePath);
++  CPrintF(TRANSV("Assumed engine data directory: %s\n"), (const char *) _fnmApplicationPath);
++  CPrintF(TRANSV("Assumed mods library directory: %s\n"), (const char *) _fnmModLibPath);
+ 
+   CPrintF("\n");
+ 
+@@ -661,6 +697,9 @@
+   // MOD info
+   _pShell->DeclareSymbol("user const CTString sys_strModName;", (void *) &sys_strModName);
+   _pShell->DeclareSymbol("user const CTString sys_strModExt;",  (void *) &sys_strModExt);
++  // Path vars
++  _pShell->DeclareSymbol("user const INDEX sys_iGameBits    ;", (void *) &sys_iGameBits);
++  _pShell->DeclareSymbol("user const INDEX sys_iSysPath    ;", (void *) &sys_iSysPath);
+ 
+   // Stock clearing
+   extern void FreeUnusedStock(void);
+diff -aurN a/Engine/Engine.h b/Engine/Engine.h
+--- a/Engine/Engine.h	2022-07-06 16:04:47.409909525 +0300
++++ b/Engine/Engine.h	2022-07-14 16:35:09.538384065 +0300
+@@ -168,6 +168,8 @@
+ ENGINE_API extern BOOL _bDedicatedServer;
+ ENGINE_API extern BOOL _bWorldEditorApp; // is this world editor app
+ ENGINE_API extern CTString _strLogFile;
++ENGINE_API extern CTFileName _fnmModLibPath;
++ENGINE_API extern INDEX sys_iSysPath;
+ 
+ // temporary vars for adjustments
+ ENGINE_API extern FLOAT tmp_af[10];
+diff -aurN a/SeriousSam/SeriousSam.cpp b/SeriousSam/SeriousSam.cpp
+--- a/SeriousSam/SeriousSam.cpp	2022-07-06 16:04:47.563243166 +0300
++++ b/SeriousSam/SeriousSam.cpp	2022-07-14 16:57:22.770082201 +0300
+@@ -138,7 +138,8 @@
+ extern CTFileName _fnmModToLoad = CTString("");
+ extern CTString _strModServerJoin = CTString("");
+ extern CTString _strURLToVisit = CTString("");
+-
++static char _strExePath[MAX_PATH] = "";
++ENGINE_API extern INDEX sys_iSysPath;
+ 
+ // state variables fo addon execution
+ // 0 - nothing
+@@ -489,6 +490,9 @@
+   }
+   // init game - this will load persistent symbols
+   _pGame->Initialize(CTString("Data\\SeriousSam.gms"));
++  // save executable path and sys var.
++  _pFileSystem->GetExecutablePath(_strExePath, sizeof (_strExePath)-1);
++  _pFileSystem->GetExecutablePath(_strExePath, sizeof (_strExePath)-1);
+ }
+ 
+ #ifdef PLATFORM_UNIX
+@@ -1475,8 +1479,13 @@
+     CTString strCommand = "SeriousSam.exe"
+     CTString strPatch = _fnmApplicationPath+"Bin\\"+strDebug+strCommand;
+ #else
+-    CTString strCommand = "SeriousSam";
+-    CTString strPatch = _fnmApplicationPath+"Bin/"+strDebug+strCommand;
++    CTString strCommand;
++    if (sys_iSysPath == 1) {
++      strCommand = sam_strGameName;
++    } else {
++      strCommand = "SeriousSam";
++    }
++    CTString strPatch = CTString(_strExePath) + strDebug + strCommand;
+ #endif
+     //+mod "+_fnmModToLoad.FileName()+"\"";
+     CTString strMod = _fnmModToLoad.FileName();
