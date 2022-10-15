@@ -12,7 +12,7 @@ GN="serioussam-tfe"
 
 DESCRIPTION="Serious Sam Classic OddWorld Modification"
 HOMEPAGE="https://github.com/tx00100xt/SE1-TFE-OddWorld"
-SRC_URI="https://github.com/tx00100xt/SE1-TFE-${MY_MOD}/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz
+SRC_URI="https://github.com/tx00100xt/SE1-TFE-OddWorld/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz
 	https://github.com/tx00100xt/${MY_PN}-mods/raw/main/SamTFE-OddWorld/SamTFE-OddWorld.tar.xz.partaa
 	https://github.com/tx00100xt/${MY_PN}-mods/raw/main/SamTFE-OddWorld/SamTFE-OddWorld.tar.xz.partab
 	https://github.com/tx00100xt/${MY_PN}-mods/raw/main/SamTFE-OddWorld/SamTFE-OddWorld.tar.xz.partac"
