@@ -92,7 +92,7 @@ src_install() {
     unpack ./"${MY_MOD_ARC}"
     mv Mods "${D}${dir}" || die "Failed to moved mod content"
     cp -fr "${dir}"/Scripts/CustomOptions/GFX-AdvancedRendering.cfg "${D}${dir}/Mods/${MY_MOD}"/Scripts/CustomOptions || die "Failed to copy "
-    cp -fr "${dir}"/Scripts/CustomOptions/GFX-RenderingOptions.cfg "${D}${dir}/Mods/${MY_MOD}"/Scripts/CustomOptions || die "Failed to copy "
+    cp -fr "${FILESDIR}"/GFX-RenderingOptions.cfg "${D}${dir}/Mods/${MY_MOD}"/Scripts/CustomOptions || die "Failed to copy "
 
     # moving libs
     if use x86; then

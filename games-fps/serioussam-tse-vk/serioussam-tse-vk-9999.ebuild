@@ -110,8 +110,7 @@ src_install() {
     rm -f  "${BUILD_DIR}"/{*.cmake,*.txt,*.a,*.ninja,.gitkeep} || die "Failed to removed temp stuff"
     rm -fr "${BUILD_DIR}"/Debug && rm -fr "${BUILD_DIR}"/CMakeFiles && rm -fr "${MY_CONTENT}/Sources"
     # moving binares
-    mv "${BUILD_DIR}"/SeriousSam "${D}/usr/bin/${GN}"  || die "Failed to moved libEntities.so"
-    mv "${BUILD_DIR}"/DedicatedServer "${D}/usr/bin/${GN}-ded"  || die "Failed to moved libEntities.so"
+    mv "${BUILD_DIR}"/SeriousSam "${D}/usr/bin/${GN}"  || die "Failed to moved SeriousSam"
     # moving content
     cp -fr "${MY_CONTENT}"/* "${D}${dir}"
     cp "${FILESDIR}/ssam.xpm" "${D}/${dir}"

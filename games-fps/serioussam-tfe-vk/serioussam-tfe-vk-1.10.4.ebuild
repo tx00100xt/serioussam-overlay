@@ -1,4 +1,4 @@
-# Copyright 1999-2021 Gentoo Authors
+# Copyright 1999-2023 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=7
@@ -9,9 +9,9 @@ MY_PN="SamTFE"
 # Game name
 GN="serioussam-tfe"
 
-DESCRIPTION="Linux port of Serious Sam Classic The First Encounter"
-HOMEPAGE="https://github.com/tx00100xt/SeriousSamClassic"
-SRC_URI="https://github.com/tx00100xt/SeriousSamClassic/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"
+DESCRIPTION="Linux port of Serious Sam Classic The First Encounter with Vulkan support"
+HOMEPAGE="https://github.com/tx00100xt/SeriousSamClassic-VK"
+SRC_URI="https://github.com/tx00100xt/SeriousSamClassic-VK/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"
 
 LICENSE="GPL-2"
 SLOT="0"
@@ -20,18 +20,21 @@ RESTRICT="bindist mirror"
 IUSE=""
 
 RDEPEND="
-    !games-fps/serioussam-tfe-vk
+    !games-fps/serioussam-tfe
 	media-libs/libsdl2[alsa,video,joystick,opengl]
 	media-libs/libvorbis
     sys-libs/zlib
 	sys-devel/flex
-    sys-devel/bison"
+    sys-devel/bison
+    dev-util/vulkan-headers
+    media-libs/vulkan-layers
+    media-libs/vulkan-loader"
 
 DEPEND="${RDEPEND}"
 BDEPEND="virtual/pkgconfig"
 
-S="${WORKDIR}/SeriousSamClassic-${PV}/${MY_PN}/Sources"
-MY_CONTENT="${WORKDIR}/SeriousSamClassic-${PV}/${MY_PN}"
+S="${WORKDIR}/SeriousSamClassic-VK-${PV}/${MY_PN}/Sources"
+MY_CONTENT="${WORKDIR}/SeriousSamClassic-VK-${PV}/${MY_PN}"
 
 QA_TEXTRELS="
 usr/lib/${GN}/libEntities.so
@@ -62,14 +65,9 @@ usr/bin/${GN}-ded
 "
 
 PATCHES=(
-	"${FILESDIR}/rparh_security.patch"
-	"${FILESDIR}/fixed_broken_timer.patch"
-	"${FILESDIR}/critical_section_multitread.patch"
-	"${FILESDIR}/cyrillic.patch"
-	"${FILESDIR}/user_data_in_home_dir.patch"
-	"${FILESDIR}/gcc-11.3_fixed_mod_startup.patch"
-	"${FILESDIR}/usr_system_dir_1.patch"
-	"${FILESDIR}/usr_system_dir_2.patch"
+	"${FILESDIR}/rparh_security_vk_1.10.4.patch"
+	"${FILESDIR}/tfe-vk-last-update.patch"
+	"${FILESDIR}/usr_suffix.patch"
 )
 
 src_configure() {
@@ -115,8 +113,7 @@ src_install() {
     rm -f  "${BUILD_DIR}"/{*.cmake,*.txt,*.a,*.ninja,.gitkeep} || die "Failed to removed temp stuff"
     rm -fr "${BUILD_DIR}"/Debug && rm -fr "${BUILD_DIR}"/CMakeFiles && rm -fr "${MY_CONTENT}/Sources"
     # moving binares
-    mv "${BUILD_DIR}"/SeriousSam "${D}/usr/bin/${GN}"  || die "Failed to moved libEntities.so"
-    mv "${BUILD_DIR}"/DedicatedServer "${D}/usr/bin/${GN}-ded"  || die "Failed to moved libEntities.so"
+    mv "${BUILD_DIR}"/serioussam "${D}/usr/bin/${GN}"  || die "Failed to moved SeriousSam"
     # moving content
     cp -fr "${MY_CONTENT}"/* "${D}${dir}"
     cp "${FILESDIR}/ssam.xpm" "${D}/${dir}"
@@ -156,6 +153,6 @@ pkg_postinst() {
 	elog "     Look at:"
 	elog "        https://github.com/tx00100xt/serioussam-overlay/README.md"
 	elog "     For information on the first launch of the game"
-	elog ""
+ 	elog ""
     echo
 }

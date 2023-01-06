@@ -1,0 +1,74 @@
+diff -aurN a/Engine/Engine.cpp b/Engine/Engine.cpp
+--- a/Engine/Engine.cpp	2022-08-02 12:16:00.997886676 +0300
++++ b/Engine/Engine.cpp	2022-08-02 12:11:28.850688165 +0300
+@@ -59,6 +59,7 @@
+ ENGINE_API BOOL _bWorldEditorApp  = FALSE;
+ ENGINE_API CTString _strLogFile = "";
+ ENGINE_API CTFileName _fnmModLibPath;
++ENGINE_API CTString _strGameSuffix;
+ 
+ // global handle for application windows
+ // !!! FIXME rcg10072001 this needs to be abstracted.
+@@ -611,22 +612,29 @@
+        sys_iSysPath = 0; // using standarted path
+   }
+ 
++  CTString _strGameID = "serioussam";
++  if( strGameID == "serioussam" ) {
++    _strGameSuffix = "-tfe/";
++  } else {
++    _strGameSuffix = "-tse/"; _strGameID = "serioussam";
++  }
++
+   // get library path for mods
+   _fnmModLibPath = "";
+   if( sys_iSysPath == 1 && sys_iGameBits == 64 && _pFileSystem->IsDirectory((const char *) "/usr/lib/x86_64-linux-gnu")) {
+-    _fnmModLibPath = "/usr/lib/x86_64-linux-gnu/" + strGameID + "/"; 
++    _fnmModLibPath = "/usr/lib/x86_64-linux-gnu/" + _strGameID +_strGameSuffix; 
+   } else if( sys_iSysPath == 1 && sys_iGameBits == 32 && _pFileSystem->IsDirectory((const char *) "/usr/lib/i386-linux-gnu")) {
+-    _fnmModLibPath = "/usr/lib/i386-linux-gnu/" + strGameID + "/";
++    _fnmModLibPath = "/usr/lib/i386-linux-gnu/" + _strGameID +_strGameSuffix;
+   } else if( sys_iSysPath == 1 && sys_iGameBits == 64 && _pFileSystem->IsDirectory((const char *) "/usr/lib64")) {
+-    _fnmModLibPath = "/usr/lib64/" + strGameID + "/";
++    _fnmModLibPath = "/usr/lib64/" + _strGameID +_strGameSuffix;
+   } else if( sys_iSysPath == 1 && sys_iGameBits == 32 && _pFileSystem->IsDirectory((const char *) "/usr/lib")) {
+-    _fnmModLibPath = "/usr/lib/" + strGameID + "/";
++    _fnmModLibPath = "/usr/lib/" + _strGameID +_strGameSuffix;
+   } else {
+     _fnmModLibPath = _fnmApplicationPath;
+   }
+ 
+   if( sys_iSysPath == 1 ) { // search game data
+-    CTFileName _fnm_usr_TestFile, _fnm_local_TestFile, _fnm_home_TestFile;
++    _fnmApplicationPath = "/usr/share/" + _strGameID + _strGameSuffix;}  if( 0 == 1 ) { CTFileName _fnm_usr_TestFile, _fnm_local_TestFile, _fnm_home_TestFile;
+     CTString _fnmUserDataPath, _fnm_TestFile;
+     int _fd;
+ 
+diff -aurN a/Engine/Engine.h b/Engine/Engine.h
+--- a/Engine/Engine.h	2022-08-02 12:16:00.997886676 +0300
++++ b/Engine/Engine.h	2022-08-02 11:57:29.808261244 +0300
+@@ -199,7 +199,8 @@
+ extern ENGINE_API BOOL _bDedicatedServer;
+ extern ENGINE_API BOOL _bWorldEditorApp; // is this world edtior app
+ extern ENGINE_API CTString _strLogFile;
++extern ENGINE_API CTString _strGameSuffix;
+ extern ENGINE_API CTFileName _fnmModLibPath;
+ extern ENGINE_API INDEX sys_iSysPath;
+ #ifdef PLATFORM_WIN32
+ //
+diff -aurN a/SeriousSam/SeriousSam.cpp b/SeriousSam/SeriousSam.cpp
+--- a/SeriousSam/SeriousSam.cpp	2022-08-02 12:16:01.221220344 +0300
++++ b/SeriousSam/SeriousSam.cpp	2022-08-02 12:14:43.824430212 +0300
+@@ -1490,7 +1490,11 @@
+ #else
+     CTString strCommand;
+     if (sys_iSysPath == 1) {
+-      strCommand = sam_strGameName;
++#ifdef FIRST_ENCOUNTER
++      strCommand = "serioussam-tfe";
++#else
++      strCommand = "serioussam-tse";
++#endif // FIRST_ENCOUNTER
+     } else {
+       strCommand = "SeriousSam";
+     }
