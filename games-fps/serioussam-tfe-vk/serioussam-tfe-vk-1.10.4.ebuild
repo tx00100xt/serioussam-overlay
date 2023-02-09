@@ -68,6 +68,7 @@ PATCHES=(
 	"${FILESDIR}/rparh_security_vk_1.10.4.patch"
 	"${FILESDIR}/tfe-vk-last-update.patch"
 	"${FILESDIR}/usr_suffix.patch"
+	"${FILESDIR}/fix-thunder.patch"
 )
 
 src_configure() {

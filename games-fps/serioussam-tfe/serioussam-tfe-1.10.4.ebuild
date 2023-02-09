@@ -65,6 +65,7 @@ PATCHES=(
 	"${FILESDIR}/rparh_security_2.patch"
 	"${FILESDIR}/tfe-last-update.patch"
 	"${FILESDIR}/usr_suffix.patch"
+	"${FILESDIR}/fix-thunder.patch"
 )
 
 src_configure() {
