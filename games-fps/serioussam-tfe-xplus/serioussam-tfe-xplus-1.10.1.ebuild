@@ -56,6 +56,7 @@ PATCHES=(
 	"${FILESDIR}/rparh_security.patch"
 	"${FILESDIR}/fixed_broken_timer.patch"
 	"${FILESDIR}/critical_section_multitread.patch"
+	"${FILESDIR}/fix-thunder.patch"
 )
 
 

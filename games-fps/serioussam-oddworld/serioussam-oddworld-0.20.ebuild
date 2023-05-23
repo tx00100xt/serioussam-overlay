@@ -53,6 +53,10 @@ usr/lib64/${GN}/Mods/${MY_MOD}/libEntities.so
 usr/lib64/${GN}/Mods/${MY_MOD}/libGame.s
 "
 
+PATCHES=(
+	"${FILESDIR}/fix-thunder.patch"
+)
+
 src_configure() {
     einfo "Setting build type Release..."
     CMAKE_BUILD_TYPE="Release"
