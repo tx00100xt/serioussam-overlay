@@ -63,8 +63,8 @@ usr/lib64/libEngineMP.so
 "
 
 PATCHES=(
-	"${FILESDIR}/rparh_security_vk_2.patch"
-	"${FILESDIR}/usr_system_dir_2.patch"
+	"${FILESDIR}/rparh_security_vk_1.10.4.patch"
+	"${FILESDIR}/usr_system_dir_9999.patch"
 )
 
 src_configure() {
@@ -110,7 +110,7 @@ src_install() {
     rm -f  "${BUILD_DIR}"/{*.cmake,*.txt,*.a,*.ninja,.gitkeep} || die "Failed to removed temp stuff"
     rm -fr "${BUILD_DIR}"/Debug && rm -fr "${BUILD_DIR}"/CMakeFiles && rm -fr "${MY_CONTENT}/Sources"
     # moving binares
-    mv "${BUILD_DIR}"/SeriousSam "${D}/usr/bin/${GN}"  || die "Failed to moved SeriousSam"
+    mv "${BUILD_DIR}"/serioussamse "${D}/usr/bin/${GN}"  || die "Failed to moved SeriousSam"
     # moving content
     cp -fr "${MY_CONTENT}"/* "${D}${dir}"
     cp "${FILESDIR}/ssam.xpm" "${D}/${dir}"
