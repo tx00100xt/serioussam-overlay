@@ -66,6 +66,7 @@ PATCHES=(
 	"${FILESDIR}/tfe-last-update.patch"
 	"${FILESDIR}/usr_suffix.patch"
 	"${FILESDIR}/fix-thunder.patch"
+	"${FILESDIR}/fix_sdl2_fullscreen_on_gnome44.patch"
 )
 
 src_configure() {

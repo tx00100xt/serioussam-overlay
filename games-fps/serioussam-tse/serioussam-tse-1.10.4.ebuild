@@ -63,6 +63,7 @@ PATCHES=(
 	"${FILESDIR}/rparh_security_2.patch"
 	"${FILESDIR}/tse-last-update.patch"
 	"${FILESDIR}/usr_suffix.patch"
+	"${FILESDIR}/fix_sdl2_fullscreen_on_gnome44.patch"
 )
 
 src_configure() {

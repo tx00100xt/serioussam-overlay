@@ -67,6 +67,7 @@ PATCHES=(
 	"${FILESDIR}/rparh_security_vk_1.10.4.patch"
 	"${FILESDIR}/tse-vk-last-update.patch"
 	"${FILESDIR}/usr_suffix.patch"
+	"${FILESDIR}/fix_sdl2_vk_fullscreen_on_gnome44.patch"
 )
 
 src_configure() {
