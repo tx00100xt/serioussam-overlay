@@ -7,7 +7,7 @@ inherit cdrom eutils unpacker
 
 PATCH_PREFIX="Patch_1.07_SE"
 # Game name
-GN="serioussam-tse"
+GN="serioussamse"
 
 DESCRIPTION="Croteam's Serious Sam Classic The Second Encounter ... the data files"
 HOMEPAGE="http://www.croteam.com/

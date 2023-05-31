@@ -8,7 +8,7 @@ inherit cmake
 MY_PN="serioussamse"
 MY_MOD="DancesWorld"
 # Game name
-GN="serioussam-tse"
+GN="serioussamse"
 
 DESCRIPTION="Serious Sam Classic Dances World Modification"
 HOMEPAGE="https://github.com/tx00100xt/SE1-TSE-DancesWorld"

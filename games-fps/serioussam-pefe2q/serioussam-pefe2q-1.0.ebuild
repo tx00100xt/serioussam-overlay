@@ -8,7 +8,7 @@ inherit cmake
 MY_PN="serioussam"
 MY_MOD="PEFE2"
 # Game name
-GN="serioussam-tfe"
+GN="serioussam"
 
 DESCRIPTION="Serious Sam Classic Parse Error FE Modification"
 HOMEPAGE="https://github.com/tx00100xt/SE1-ParseError"

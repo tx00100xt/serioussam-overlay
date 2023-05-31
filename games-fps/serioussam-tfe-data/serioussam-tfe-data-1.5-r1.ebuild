@@ -6,7 +6,7 @@ EAPI=7
 inherit cdrom eutils unpacker
 
 # Game name
-GN="serioussam-tfe"
+GN="serioussam"
 
 LOKI_PACKAGE="ssam-tfe-lnx-beta1a.run"
 # mirror

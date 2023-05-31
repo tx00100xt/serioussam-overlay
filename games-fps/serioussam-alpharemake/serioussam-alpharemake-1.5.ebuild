@@ -8,7 +8,7 @@ inherit cmake
 MY_PN="serioussam"
 MY_MOD="SSA"
 # Game name
-GN="serioussam-tfe"
+GN="serioussam"
 
 DESCRIPTION="Serious Sam Classic The First Encounter Alpha Remake Modification"
 HOMEPAGE="https://github.com/tx00100xt/SeriousSamAlphaRemake"
@@ -93,7 +93,6 @@ src_install() {
     mv Mods "${D}${dir}" || die "Failed to moved mod content"
     cp -fr "${dir}"/Scripts/CustomOptions/GFX-AdvancedRendering.cfg "${D}${dir}/Mods/${MY_MOD}"/Scripts/CustomOptions || die "Failed to copy "
     cp -fr "${FILESDIR}"/GFX-RenderingOptions.cfg "${D}${dir}/Mods/${MY_MOD}"/Scripts/CustomOptions || die "Failed to copy "
-    rm -f "${D}${dir}/Mods/${MY_MOD}"/Data/Translations/engine.txt || die "Failed to remove "
 
     # moving libs
     if use x86; then

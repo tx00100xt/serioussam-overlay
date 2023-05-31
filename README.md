@@ -87,6 +87,21 @@ To install Nightmare Tower Modification type this in your terminal:
 emerge serioussam-tower
 ```
 
+To install ST8VI Modification type this in your terminal:
+```
+emerge serioussam-st8vi
+```
+
+To install ST8VIPE Modification type this in your terminal:
+```
+emerge serioussam-st8vipe
+```
+
+To install Hero Number One Modification type this in your terminal:
+```
+emerge serioussam-hno
+```
+
 ### Metapackage's
 
 You can use metapackage for Serious Sam The First Encounte and Serious Sam The Second Encounter.

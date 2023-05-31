@@ -7,7 +7,7 @@ inherit cmake
 
 MY_PN="SamTSE"
 # Game name
-GN="serioussam-tse"
+GN="serioussamse"
 
 DESCRIPTION="Serious Sam Classic The Second Encounter XPLUS Modification"
 HOMEPAGE="https://github.com/tx00100xt/SeriousSamClassic"

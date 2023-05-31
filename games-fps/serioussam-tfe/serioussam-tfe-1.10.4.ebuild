@@ -7,7 +7,7 @@ inherit cmake desktop
 
 MY_PN="SamTFE"
 # Game name
-GN="serioussam-tfe"
+GN="serioussam"
 
 DESCRIPTION="Linux port of Serious Sam Classic The First Encounter"
 HOMEPAGE="https://github.com/tx00100xt/SeriousSamClassic"
@@ -62,9 +62,8 @@ usr/bin/${GN}-ded
 "
 
 PATCHES=(
-	"${FILESDIR}/rparh_security_2.patch"
+	"${FILESDIR}/rparh_security.patch"
 	"${FILESDIR}/tfe-last-update.patch"
-	"${FILESDIR}/usr_suffix.patch"
 	"${FILESDIR}/fix-thunder.patch"
 	"${FILESDIR}/fix_sdl2_fullscreen_on_gnome44.patch"
 )
@@ -132,10 +131,10 @@ src_install() {
 pkg_postinst() {
 	elog "     ***************************************************************************************"
 	elog "     If you have access to a copy of the game (either by CD or through Steam),"
-	elog "     you can copy the *.gro files to the /usr/share/serioussam-tfe directory."
-	elog "     /usr/share/serioussam-tfe is the directory of the game Serious Sam Classic The First Encounter"
+	elog "     you can copy the *.gro files to the /usr/share/serioussam directory."
+	elog "     /usr/share/serioussam is the directory of the game Serious Sam Classic The First Encounter"
 	elog "     ***************************************************************************************"
-	elog "     Copy all *.gro files and Help folder from the game directory to serioussam-tfe directory."
+	elog "     Copy all *.gro files and Help folder from the game directory to serioussam directory."
 	elog "     At the current time the files are:"
 	elog "      - Help (folder)"
 	elog "      - Levels (folder)"

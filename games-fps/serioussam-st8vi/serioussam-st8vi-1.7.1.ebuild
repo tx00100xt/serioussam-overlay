@@ -8,7 +8,7 @@ inherit cmake
 MY_PN="serioussamse"
 MY_MOD="ST8VI"
 # Game name
-GN="serioussam-tse"
+GN="serioussamse"
 
 DESCRIPTION="Serious Sam Classic ST8VI Modification"
 HOMEPAGE="https://github.com/tx00100xt/SE1-TSE-ST8VI"

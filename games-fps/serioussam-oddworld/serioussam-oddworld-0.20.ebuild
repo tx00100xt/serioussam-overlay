@@ -8,7 +8,7 @@ inherit cmake
 MY_PN="serioussam"
 MY_MOD="OddWorldHD"
 # Game name
-GN="serioussam-tfe"
+GN="serioussam"
 
 DESCRIPTION="Serious Sam Classic OddWorld Modification"
 HOMEPAGE="https://github.com/tx00100xt/SE1-TFE-OddWorld"

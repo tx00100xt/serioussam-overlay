@@ -7,7 +7,7 @@ inherit cmake git-r3 desktop
 
 MY_PN="SamTSE"
 # Game name
-GN="serioussam-tse"
+GN="serioussamse"
 
 DESCRIPTION="Linux port of Serious Sam Classic The Second Encounter"
 HOMEPAGE="https://github.com/tx00100xt/SeriousSamClassic"
@@ -60,8 +60,7 @@ usr/lib64/libEngineMP.so
 "
 
 PATCHES=(
-	"${FILESDIR}/rparh_security_2.patch"
-	"${FILESDIR}/usr_system_dir_9999.patch"
+	"${FILESDIR}/rparh_security.patch"
 )
 
 src_configure() {
@@ -131,10 +130,10 @@ src_install() {
 pkg_postinst() {
 	elog "     ***************************************************************************************"
 	elog "     If you have access to a copy of the game (either by CD or through Steam),"
-	elog "     you can copy the *.gro files to the /usr/share/serioussam-tse directory."
-	elog "     /usr/share/serioussam-tse is the directory of the game Serious Sam Classic The Second Encounter"
+	elog "     you can copy the *.gro files to the /usr/share/serioussamse directory."
+	elog "     /usr/share/serioussamse is the directory of the game Serious Sam Classic The Second Encounter"
 	elog "     ***************************************************************************************"
-	elog "     Copy all *.gro files and Help folder from the game directory to serioussam-tse directory."
+	elog "     Copy all *.gro files and Help folder from the game directory to serioussamse directory."
 	elog "     At the current time the files are:"
 	elog "      - Help (folder)"
 	elog "      - SE1_00.gro"
