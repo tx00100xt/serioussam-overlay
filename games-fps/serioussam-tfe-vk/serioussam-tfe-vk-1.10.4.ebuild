@@ -65,10 +65,8 @@ usr/bin/${GN}-ded
 "
 
 PATCHES=(
+	"${FILESDIR}/samtfe-vk-1.10.4-to-1.10.5-pre.patch"
 	"${FILESDIR}/rparh_security_vk_1.10.4.patch"
-	"${FILESDIR}/tfe-vk-last-update.patch"
-	"${FILESDIR}/fix-thunder.patch"
-	"${FILESDIR}/fix_sdl2_vk_fullscreen_on_gnome44.patch"
 )
 
 src_configure() {

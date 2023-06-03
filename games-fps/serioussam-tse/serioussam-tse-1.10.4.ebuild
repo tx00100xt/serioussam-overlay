@@ -60,9 +60,8 @@ usr/lib64/libEngineMP.so
 "
 
 PATCHES=(
+	"${FILESDIR}/samtse-1.10.4-to-1.10.5-pre.patch"
 	"${FILESDIR}/rparh_security.patch"
-	"${FILESDIR}/tse-last-update.patch"
-	"${FILESDIR}/fix_sdl2_fullscreen_on_gnome44.patch"
 )
 
 src_configure() {

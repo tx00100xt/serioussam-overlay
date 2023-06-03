@@ -1,6 +1,6 @@
 diff -aurN a/amp11lib/ampdec.cpp b/amp11lib/ampdec.cpp
 --- a/amp11lib/ampdec.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/amp11lib/ampdec.cpp	2023-01-05 19:38:23.957293683 +0300
++++ b/amp11lib/ampdec.cpp	2023-06-02 12:18:16.729960353 +0300
 @@ -248,13 +248,16 @@
    mainbufpos=0;
    mainbuflen=0;
@@ -83,7 +83,7 @@ diff -aurN a/amp11lib/ampdec.cpp b/amp11lib/ampdec.cpp
      seekinitframes=0;
 diff -aurN a/amp11lib/binfile/binfile.cpp b/amp11lib/binfile/binfile.cpp
 --- a/amp11lib/binfile/binfile.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/amp11lib/binfile/binfile.cpp	2023-01-05 19:38:23.957293683 +0300
++++ b/amp11lib/binfile/binfile.cpp	2023-06-02 12:18:16.729960353 +0300
 @@ -137,11 +137,13 @@
      }
      bufdirty=0;
@@ -101,6 +101,15 @@ diff -aurN a/amp11lib/binfile/binfile.cpp b/amp11lib/binfile/binfile.cpp
    bufstart=filepos;
    bufpos=0;
    buflen=0;
+@@ -244,7 +246,7 @@
+   case ioctlrbufget: return buflen-bufpos;
+   case ioctlwbufset: return (mode&modeseek)?setbuffer(len):setwbuffer(len);
+   case ioctlwbufgetlen: return (mode&modeseek)?bufmax:wbufmax;
+-  case ioctlwbufget: return (mode&modeseek)?bufpos:bufpos;
++  case ioctlwbufget: return (mode&modeseek)?bufpos:wbufpos;
+   case ioctlrflush: return invalidatebuffer(0);
+   case ioctlrflushforce: return invalidatebuffer(1);
+   case ioctlrcancel: return invalidatebuffer(2);
 @@ -496,13 +498,16 @@
      return l1+l2;
    }
@@ -124,7 +133,7 @@ diff -aurN a/amp11lib/binfile/binfile.cpp b/amp11lib/binfile/binfile.cpp
      memcpy(buffer+bufpos, buf, l1);
 diff -aurN a/amp11lib/binfile/binfstd.cpp b/amp11lib/binfile/binfstd.cpp
 --- a/amp11lib/binfile/binfstd.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/amp11lib/binfile/binfstd.cpp	2023-01-05 19:38:23.957293683 +0300
++++ b/amp11lib/binfile/binfstd.cpp	2023-06-02 12:18:16.729960353 +0300
 @@ -78,7 +78,7 @@
  {
    closemode();
@@ -136,19 +145,433 @@ diff -aurN a/amp11lib/binfile/binfstd.cpp b/amp11lib/binfile/binfstd.cpp
  }
 diff -aurN a/CMakeLists.txt b/CMakeLists.txt
 --- a/CMakeLists.txt	2022-12-20 18:00:19.000000000 +0300
-+++ b/CMakeLists.txt	2023-01-05 19:38:23.763959901 +0300
-@@ -91,6 +91,8 @@
++++ b/CMakeLists.txt	2023-06-02 12:18:16.573291918 +0300
+@@ -1,4 +1,4 @@
+-cmake_minimum_required(VERSION 2.8.7)
++cmake_minimum_required(VERSION 2.8.12)
+ project(SeriousEngine)
+ 
+ # Set @rpath for Mac OS X shared library install names.
+@@ -10,7 +10,6 @@
+ option(USE_SYSTEM_VULKAN "Use systems vulkan development files" On)
+ option(USE_CCACHE "Set to ON to use ccache if present in the system" ${USE_CCACHE})
+ 
+-
+ # fallback for cmake versions without add_compile_options # RAKE! Borrowed from dhewm3 project
+ if(NOT COMMAND add_compile_options)
+ 	function(add_compile_options)
+@@ -81,6 +80,15 @@
+     set(LOCAL_INSTALL FALSE)
+ endif()
+ 
++if(NOT LOCAL_INSTALL)
++	find_package(ImageMagick COMPONENTS convert)
++    if(ImageMagick_convert_FOUND)
++        #message(STATUS "ImageMagick convert found: ${ImageMagick_convert_EXECUTABLE}")
++    else()
++        message(FATAL_ERROR "Error! LOCAL_INSTAL is set but neccessary ImageMagick convert are missing")
++    endif()
++endif()
++
+ # Set internal name for not local installation
+ if(TFE)
+     set(INTERNAL_NAME "serioussam")
+@@ -91,6 +99,8 @@
  # Set up some sanity stuff...
  if(CMAKE_SYSTEM_NAME STREQUAL "Linux" OR CMAKE_SYSTEM_NAME MATCHES "GNU|kFreeBSD")
      SET(LINUX TRUE)
-+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-format-security -Wno-reorder -Wno-unused-but-set-variable -Wno-maybe-uninitialized -Wno-class-memaccess -Wno-unused-function -Wno-format")
-+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-format-security -Wno-reorder -Wno-unused-but-set-variable -Wno-maybe-uninitialized -Wno-class-memaccess -Wno-unused-function -Wno-format")
++	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wno-reorder -Wno-unused-but-set-variable -Wno-maybe-uninitialized -Wno-class-memaccess -Wno-unused-function -Wno-format")
++	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -Wno-reorder -Wno-unused-but-set-variable -Wno-maybe-uninitialized -Wno-class-memaccess -Wno-unused-function -Wno-format")
  endif()
  if(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
      SET(FREEBSD TRUE)
+@@ -110,6 +120,92 @@
+     SET(DEBUG TRUE)
+ endif()
+ 
++if (LINUX)
++    set (CMAKE_OS_NAME "GNU/Linux" CACHE STRING "Operating system name" FORCE)
++    ## Check for Debian GNU/Linux
++    find_file (DEBIAN_FOUND debian_version debconf.conf
++      PATHS /etc
++      )
++    if (DEBIAN_FOUND)
++      set (CMAKE_OS_NAME "Debian" CACHE STRING "Operating system name" FORCE)
++    endif (DEBIAN_FOUND)
++    ##  Check for Fedora
++    find_file (FEDORA_FOUND fedora-release
++      PATHS /etc
++      )
++    if (FEDORA_FOUND)
++      set (CMAKE_OS_NAME "Fedora" CACHE STRING "Operating system name" FORCE)
++    endif (FEDORA_FOUND)
++    ##  Check for RedHat
++    find_file (REDHAT_FOUND redhat-release inittab.RH
++      PATHS /etc
++      )
++    if (REDHAT_FOUND)
++      set (CMAKE_OS_NAME "RedHat" CACHE STRING "Operating system name" FORCE)
++    endif (REDHAT_FOUND)   
++    ## Extra check for Ubuntu    
++    if (DEBIAN_FOUND)
++      ## At its core Ubuntu is a Debian system, with
++      ## a slightly altered configuration; hence from
++      ## a first superficial inspection a system will
++      ## be considered as Debian, which signifies an
++      ## extra check is required.
++      find_file (UBUNTU_EXTRA legal issue
++	PATHS /etc
++	)
++    if (UBUNTU_EXTRA)
++	## Scan contents of file
++	file (STRINGS ${UBUNTU_EXTRA} UBUNTU_FOUND
++	  REGEX Ubuntu
++	  )
++	## Check result of string search
++	if (UBUNTU_FOUND)
++	  set (CMAKE_OS_NAME "Ubuntu" CACHE STRING "Operating system name" FORCE)
++	  set (DEBIAN_FOUND FALSE)
++	endif (UBUNTU_FOUND)
++    endif (UBUNTU_EXTRA)      
++    endif (DEBIAN_FOUND)
++endif (LINUX)
++
++message(STATUS "Operating system name: ${CMAKE_OS_NAME}")
++
++set(CMAKE_ARCH_BITS 32)
++set(CMAKE_INSTALL_LIBDIR "/usr/lib")
++if(CMAKE_SIZEOF_VOID_P EQUAL 8)
++    set(CMAKE_ARCH_BITS 64)
++    set(CMAKE_INSTALL_LIBDIR "/usr/lib64")
++endif()
++
++message(STATUS "Arch bits: ${CMAKE_ARCH_BITS}")
++
++if(DEBIAN_FOUND OR UBUNTU_FOUND)
++    #set libdir for debian based OS
++    if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "riscv64")
++        set(CMAKE_INSTALL_LIBDIR "/usr/lib/riscv64-linux-gnu")
++    elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm.*|ARM.*)")  # 32bit)
++        set(CMAKE_INSTALL_LIBDIR "/usr/lib/arm-linux-gnueabihf")
++    elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64.*|AARCH64.*)")
++        set(CMAKE_INSTALL_LIBDIR "/usr/lib/aarch64-linux-gnu")
++        if(NOT "${CMAKE_SIZEOF_VOID_P}" EQUAL "8")
++            message(FATAL_ERROR "invalid pointer size")
++        endif()
++    elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(powerpc|ppc)64")
++        set(CMAKE_INSTALL_LIBDIR "/usr/lib/powerpc64-linux-gnu")
++    elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL s390x)
++        set(CMAKE_INSTALL_LIBDIR "/usr/lib/s390x-linux-gnu")
++    elseif((CMAKE_SYSTEM_PROCESSOR MATCHES "i386|i686|x86|AMD64") AND (CMAKE_SIZEOF_VOID_P EQUAL 4))
++        set(CMAKE_INSTALL_LIBDIR "/usr/lib/i386-linux-gnu")
++    elseif((CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64") AND (CMAKE_SIZEOF_VOID_P EQUAL 8))
++        set(CMAKE_INSTALL_LIBDIR "/usr/lib/x86_64-linux-gnu")
++    elseif((CMAKE_SYSTEM_PROCESSOR MATCHES "i386") AND (CMAKE_SIZEOF_VOID_P EQUAL 8) AND (APPLE))
++        set(CMAKE_INSTALL_LIBDIR "/usr/lib/i386-linux-gnu")
++    else()
++        message(FATAL_ERROR "Unknown architecture")
++    endif()
++endif()
++
++message(STATUS "Installed libraries dir: ${CMAKE_INSTALL_LIBDIR}")
++
+ ## ** RAKE! start compiler specific flags section **
+ ## ** RAKE! Borrowed from dhewm3 project, need to **
+ ## ** RAKE! clean up for SeriousEngine use. Also  **
+@@ -122,10 +218,23 @@
+ 	add_compile_options(-pipe)
+ 	add_compile_options(-fPIC)
+ 	add_compile_options(-fms-extensions)
+-	if(NOT PANDORA AND NOT PYRA AND NOT (MACOSX AND CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64"))
+-		add_compile_options(-march=native)
++	if(NOT PANDORA AND NOT PYRA AND NOT RPI4 AND NOT (MACOSX AND CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64"))
++		if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "riscv64")
++			add_compile_options(-march=rv64gc)
++		    add_compile_options(-ftree-vectorize)
++		    add_compile_options(-fomit-frame-pointer)
++			message(STATUS "Architecture RISCV64, -march=rv64gc")
++        elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(powerpc|ppc)64")
++			add_compile_options(-mpowerpc64)
++		else()
++            if(LOCAL_INSTALL)
++			    add_compile_options(-march=native)
++            elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "i386|i586|i686|x86|AMD64|x86_64")
++			    add_compile_options(-march=native) # set mtune=generic if nedded
++		    endif()
++		endif()
+ 	endif()
+-	if(CMAKE_SYSTEM_PROCESSOR MATCHES "^arm.*")
++	if((PYRA OR PANDORA)  AND (CMAKE_SYSTEM_PROCESSOR MATCHES "^arm.*"))
+ 		if(PYRA)
+ 		add_compile_options(-mfpu=neon-vfpv4)
+ 		add_compile_options(-mcpu=cortex-a15)
+@@ -133,12 +242,38 @@
+ 		add_compile_options(-marm)
+                 elseif(NOT (MACOSX AND CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64"))
+                     add_compile_options(-mfpu=neon)
+-		else()
++		elseif(PANDORA)
+ 		add_compile_options(-mfpu=neon)
+ 		endif()
+ 		add_compile_options(-fsigned-char)
+ 	endif()
+-        add_compile_options(-fno-strict-aliasing)
++    if(NOT PYRA AND NOT PANDORA AND ${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES "arm*")
++        if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm.*|ARM.*)")  # 32bit
++            add_compile_options(-march=armv8-a+crc)
++		    add_compile_options(-mfpu=neon-fp-armv8)
++            if(RPI4) 
++		        add_compile_options(-mcpu=cortex-a72)
++            endif()
++		    add_compile_options(-mfloat-abi=hard)
++		    add_compile_options(-ftree-vectorize)
++		    add_compile_options(-fomit-frame-pointer)
++            message(STATUS "ARM 32bit, -march=armv8-a+crc, adding -mfpu=neon-fp-armv8")
++        elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64.*|AARCH64.*)")  # NEON is implied on aarch64
++            if(NOT "${CMAKE_SIZEOF_VOID_P}" EQUAL "8")
++                message(FATAL_ERROR "invalid pointer size")
++            endif()
++            add_compile_options(-march=armv8-a+crc+fp+simd)
++            if(RPI4) 
++		        add_compile_options(-mcpu=cortex-a72)
++            endif()
++		    add_compile_options(-ftree-vectorize)
++		    add_compile_options(-fomit-frame-pointer)
++            message(STATUS "AARCH64, -march=armv8-a+crc+fp+simd")
++        else()
++            message(FATAL_ERROR "Unknown ARM processor '${CMAKE_SYSTEM_PROCESSOR}'")
++        endif()
++    endif()
++    add_compile_options(-fno-strict-aliasing)
+ 	add_definitions(-D_REENTRANT=1)
+ 	add_definitions(-D_MT=1)
+ 
+@@ -147,44 +282,45 @@
+ 	## For C flags
+         set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS} -g -D_DEBUG=1 -DDEBUG=1 -O0")
+         if(PANDORA)
+-            set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS} -DNDEBUG=1 -D_NDEBUG=1 -g -O3 -faligned-new -ffast-math")
+-            set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS} -DNDEBUG=1 -D_NDEBUG=1 -g -O3  -faligned-new -ffast-math")
++            set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS} -DNDEBUG=1 -D_NDEBUG=1 -g -O2 -faligned-new -ffast-math")
++            set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS} -DNDEBUG=1 -D_NDEBUG=1 -g -O2  -faligned-new -ffast-math")
+             set(CMAKE_C_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS} -DNDEBUG=1 -D_NDEBUG=1 -Os -ffast-math")
+         elseif(PYRA)
+-            set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS} -DNDEBUG=1 -D_NDEBUG=1 -g -O3 -marm -faligned-new -ffast-math")
+-            set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS} -DNDEBUG=1 -D_NDEBUG=1 -g -O3 -marm -faligned-new -ffast-math")
++            set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS} -DNDEBUG=1 -D_NDEBUG=1 -g -O2 -marm -faligned-new -ffast-math")
++            set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS} -DNDEBUG=1 -D_NDEBUG=1 -g -O2 -marm -faligned-new -ffast-math")
+             set(CMAKE_C_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS} -DNDEBUG=1 -D_NDEBUG=1 -Os -marm -ffast-math")
+         elseif(MACOSX AND CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64")
+             set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS} -DNDEBUG=1 -D_NDEBUG=1 -g -O0 -fno-unsafe-math-optimizations")
+             set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS} -DNDEBUG=1 -D_NDEBUG=1 -g -O0 -fno-unsafe-math-optimizations")
+             set(CMAKE_C_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS} -DNDEBUG=1 -D_NDEBUG=1 -O0 -fno-unsafe-math-optimizations")
+         else()
+-            set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS} -DNDEBUG=1 -D_NDEBUG=1 -g -O3 -fno-delete-null-pointer-checks -fno-unsafe-math-optimizations")
+-            set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS} -DNDEBUG=1 -D_NDEBUG=1 -g -O3 -fno-delete-null-pointer-checks -fno-unsafe-math-optimizations")
++            set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS} -DNDEBUG=1 -D_NDEBUG=1 -g -O2 -fno-delete-null-pointer-checks -fno-unsafe-math-optimizations")
++            set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS} -DNDEBUG=1 -D_NDEBUG=1 -g -O2 -fno-delete-null-pointer-checks -fno-unsafe-math-optimizations")
+             set(CMAKE_C_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS} -DNDEBUG=1 -D_NDEBUG=1 -Os -fno-delete-null-pointer-checks -fno-unsafe-math-optimizations")
+         endif()
+ 
+ 	## For C++ flags
+         set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -g -D_DEBUG=1 -DDEBUG=1 -O0")
+         if(PANDORA)
+-            set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -DNDEBUG=1 -D_NDEBUG=1 -O3  -faligned-new -ffast-math")
+-            set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS} -DNDEBUG=1 -D_NDEBUG=1 -g -O3  -faligned-new -ffast-math")
++            set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -DNDEBUG=1 -D_NDEBUG=1 -O2  -faligned-new -ffast-math")
++            set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS} -DNDEBUG=1 -D_NDEBUG=1 -g -O2  -faligned-new -ffast-math")
+             set(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS} -DNDEBUG=1 -D_NDEBUG=1 -Os -ffast-math")
+         elseif(PYRA)
+-            set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -DNDEBUG=1 -D_NDEBUG=1 -O3 -marm -faligned-new -ffast-math")
+-            set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS} -DNDEBUG=1 -D_NDEBUG=1 -g -O3 -marm -faligned-new -ffast-math")
++            set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -DNDEBUG=1 -D_NDEBUG=1 -O2 -marm -faligned-new -ffast-math")
++            set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS} -DNDEBUG=1 -D_NDEBUG=1 -g -O2 -marm -faligned-new -ffast-math")
+             set(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS} -DNDEBUG=1 -D_NDEBUG=1 -Os -marm -ffast-math")
+         elseif(MACOSX AND CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64")
+             set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -DNDEBUG=1 -D_NDEBUG=1 -O0 -fno-unsafe-math-optimizations")
+             set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS} -DNDEBUG=1 -D_NDEBUG=1 -g -O0 -fno-unsafe-math-optimizations") ## RAKE! Does -DNDEBUG=1 and -D_NDEBUG=1 mess with RelWithDebInfo?
+             set(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS} -DNDEBUG=1 -D_NDEBUG=1 -O0 -fno-unsafe-math-optimizations")
+         else()
+-            set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -DNDEBUG=1 -D_NDEBUG=1 -O3 -fno-delete-null-pointer-checks -fno-unsafe-math-optimizations")
+-            set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS} -DNDEBUG=1 -D_NDEBUG=1 -g -O3 -fno-delete-null-pointer-checks -fno-unsafe-math-optimizations") ## RAKE! Does -DNDEBUG=1 and -D_NDEBUG=1 mess with RelWithDebInfo?
++            set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -DNDEBUG=1 -D_NDEBUG=1 -O2 -fno-delete-null-pointer-checks -fno-unsafe-math-optimizations")
++            set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS} -DNDEBUG=1 -D_NDEBUG=1 -g -O2 -fno-delete-null-pointer-checks -fno-unsafe-math-optimizations") ## RAKE! Does -DNDEBUG=1 and -D_NDEBUG=1 mess with RelWithDebInfo?
+             set(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS} -DNDEBUG=1 -D_NDEBUG=1 -Os -fno-delete-null-pointer-checks -fno-unsafe-math-optimizations")
+         endif()
+ 
+ 	# TODO fix these warnings
++	add_compile_options(-Wno-format-security)
+ 	add_compile_options(-Wno-switch)
+ 	add_compile_options(-Wno-char-subscripts)
+ 	add_compile_options(-Wno-unknown-pragmas)
+@@ -318,6 +454,20 @@
+  set(MP "MP")
+ endif()
+ 
++option(XPLUS "Compile a XPLUS modification" FALSE)
++if(XPLUS)
++    execute_process (
++        COMMAND bash -c "cp -fr ${CMAKE_SOURCE_DIR}/Entities${MP}/PlayerWeaponsHD.es ${CMAKE_SOURCE_DIR}/Entities${MP}/PlayerWeapons.es;"
++        OUTPUT_VARIABLE outVar
++    )
++    message(STATUS "Compile a XPLUS modification")
++else()
++    execute_process (
++        COMMAND bash -c "cp -fr ${CMAKE_SOURCE_DIR}/Entities${MP}/PlayerWeapons_old.es ${CMAKE_SOURCE_DIR}/Entities${MP}/PlayerWeapons.es;"
++        OUTPUT_VARIABLE outVar
++    )
++    message(STATUS "Compile a standard game")
++endif()
+ 
+ # !!! FIXME: I currently force this, but you shouldn't _have_ to.
+ option(USE_SINGLE_THREAD "Use Single Threaded version" FALSE)
+@@ -715,6 +865,7 @@
+ endif()
+ add_dependencies(${GAMEMPLIB} ParseEntities)
+ 
++if(NOT XPLUS)
+ set(SHADERSLIB "Shaders${DEBUGSUFFIX}")
+ add_library(${SHADERSLIB} SHARED
+     Shaders/AddShader.cpp
+@@ -742,10 +893,12 @@
+     target_link_libraries(${SHADERSLIB} "-undefined dynamic_lookup")
+ endif()
+ add_dependencies(${SHADERSLIB} ParseEntities)
++endif() # NOT XPLUS
+ 
+ add_parser_and_scanner("Engine/Base/Parser" "Engine/Base/Scanner")
+ add_parser_and_scanner("Engine/Ska/smcPars" "Engine/Ska/smcScan")
+ 
++if(NOT XPLUS)
+ if (USE_I386_NASM_ASM)
+     add_custom_command(
+         OUTPUT "SoundMixer386.o"
+@@ -1171,13 +1324,16 @@
+ if(LOCAL_INSTALL)
+  set_target_properties(SeriousSam PROPERTIES OUTPUT_NAME "SeriousSam")
+  set_target_properties(DedicatedServer  PROPERTIES OUTPUT_NAME "DedicatedServer")
++ set_target_properties(MakeFONT PROPERTIES OUTPUT_NAME "MakeFONT")
+ else()
+  set_target_properties(SeriousSam PROPERTIES OUTPUT_NAME "${INTERNAL_NAME}")
+  set_target_properties(DedicatedServer  PROPERTIES OUTPUT_NAME "${INTERNAL_NAME}-ded")
++ set_target_properties(MakeFONT PROPERTIES OUTPUT_NAME "${INTERNAL_NAME}-mkfont")
+ endif()
++endif() # NOT XPLUS
+ 
+ # RAKE! Install Section.
+-if(LOCAL_INSTALL)
++if(LOCAL_INSTALL AND NOT XPLUS)
+ if(DEBUG) # RAKE! Will this work with TFE?
+     install(TARGETS SeriousSam ${SHADERSLIB} ${GAMEMPLIB} ${ENTITIESMPLIB} ${ENGINELIB}
+             RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}/Bin"
+@@ -1188,7 +1344,7 @@
+                 RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}/Bin"
+                 PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_WRITE GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+     endif()
+-    if(BUILD_BUILD_MAKEFONT)
++    if(BUILD_MAKEFONT)
+         install(TARGETS MakeFONT
+                 RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}/Bin"
+                 PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_WRITE GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+@@ -1208,7 +1364,7 @@
+                 RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}/Bin"
+                 PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_WRITE GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+     endif()
+-    if(BUILD_BUILD_MAKEFONT)
++    if(BUILD_MAKEFONT)
+         install(TARGETS MakeFONT
+                 RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}/Bin"
+                 PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_WRITE GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+@@ -1219,7 +1375,12 @@
+                 PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_WRITE GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+     endif()
+ endif()
+-else()
++elseif(LOCAL_INSTALL AND XPLUS)
++    install(TARGETS ${GAMEMPLIB} ${ENTITIESMPLIB}
++            LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/Mods/XPLUS/Bin"
++            PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_WRITE GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
++# NOT LOCAL INSTALL
++elseif(NOT LOCAL_INSTALL AND NOT XPLUS)
+ if(DEBUG) # RAKE! Will this work with TFE?
+     install(TARGETS SeriousSam ${SHADERSLIB} ${GAMEMPLIB} ${ENTITIESMPLIB} ${ENGINELIB}
+             RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}/Bin"
+@@ -1230,7 +1391,7 @@
+                 RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}/Bin"
+                 PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_WRITE GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+     endif()
+-    if(BUILD_BUILD_MAKEFONT)
++    if(BUILD_MAKEFONT)
+         install(TARGETS MakeFONT
+                 RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}/Bin"
+                 PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_WRITE GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+@@ -1243,35 +1404,57 @@
+ else()
+     install(TARGETS SeriousSam ${SHADERSLIB} ${GAMEMPLIB} ${ENTITIESMPLIB}
+             RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}/bin"
+-            LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/${INTERNAL_NAME}"
++            LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}/${INTERNAL_NAME}"
+             PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_WRITE GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+     install(TARGETS ${ENGINELIB}
+-            LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/lib"
++            LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+             PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_WRITE GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+     if(BUILD_DEDICATED_SERVER)
+         install(TARGETS DedicatedServer
+                 RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}/bin"
+                 PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_WRITE GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+     endif()
+-    if(BUILD_BUILD_MAKEFONT)
++    if(BUILD_MAKEFONT)
+         install(TARGETS MakeFONT
+                 RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}/bin"
+                 PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_WRITE GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+     endif()
+     if(BUILD_AMP11LIB)
+         install(TARGETS amp11lib
+-                LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/${INTERNAL_NAME}"
++                LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}/${INTERNAL_NAME}"
+                 PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_WRITE GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+     endif()
+ endif()
++elseif(NOT LOCAL_INSTALL AND XPLUS)
++    install(TARGETS ${GAMEMPLIB} ${ENTITIESMPLIB}
++            LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}/${INTERNAL_NAME}/Mods/XPLUS"
++            PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_WRITE GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+ endif()
+ 
+ # RAKE! If CMAKE_INSTALL_PREFIX was set during config then its not a local install
+ # and SE1_10.gro needs to be installed to Games root dir.
+-if(NOT LOCAL_INSTALL)
++if(NOT LOCAL_INSTALL AND NOT XPLUS)
+     install(FILES ${CMAKE_SOURCE_DIR}/../SE1_10b.gro
+             DESTINATION "${CMAKE_INSTALL_PREFIX}/share/${INTERNAL_NAME}"
+-            PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_WRITE GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
++            PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
++    install(FILES "${CMAKE_SOURCE_DIR}/../${INTERNAL_NAME}.desktop"
++            DESTINATION "${CMAKE_INSTALL_PREFIX}//share/applications"
++            PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
++    set(A 16)
++    set(B 32)
++    set(C 48)
++    set(D 64)
++    set(E 128)
++    foreach(X IN LISTS A B C D E)
++        #message(STATUS "Create icon ${X}x${X}")
++        execute_process (
++            COMMAND bash -c "${ImageMagick_convert_EXECUTABLE} ${CMAKE_SOURCE_DIR}/../${INTERNAL_NAME}.png -scale ${X}x${X} ${CMAKE_SOURCE_DIR}/../${X}.png;"
++            OUTPUT_VARIABLE outVar
++       )
++       install(FILES ${CMAKE_SOURCE_DIR}/../${X}.png
++               DESTINATION "${CMAKE_INSTALL_PREFIX}/share/icons/hicolor/${X}x${X}/apps" RENAME "${INTERNAL_NAME}.png"
++               PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
++	endforeach()
+ endif()
+ 
+ # end of CMakeLists.txt ...
 diff -aurN a/Ecc/Main.cpp b/Ecc/Main.cpp
 --- a/Ecc/Main.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/Ecc/Main.cpp	2023-01-05 19:38:23.767293242 +0300
++++ b/Ecc/Main.cpp	2023-06-02 12:18:16.576625288 +0300
 @@ -244,10 +244,10 @@
  
        // skip #line directives
@@ -164,7 +587,7 @@ diff -aurN a/Ecc/Main.cpp b/Ecc/Main.cpp
          iChanged = 1;
 diff -aurN a/Ecc/StdH.h b/Ecc/StdH.h
 --- a/Ecc/StdH.h	2022-12-20 18:00:19.000000000 +0300
-+++ b/Ecc/StdH.h	2023-01-05 19:38:23.767293242 +0300
++++ b/Ecc/StdH.h	2023-06-02 12:18:16.576625288 +0300
 @@ -29,5 +29,5 @@
  #include <errno.h>
  #include <sys/param.h>
@@ -172,9 +595,76 @@ diff -aurN a/Ecc/StdH.h b/Ecc/StdH.h
 -#define _fullpath(x, y, z) realpath(y, x)
 +#define _fullpath(x, y, z) char *res = realpath(y, x)
  #endif
+diff -aurN a/Engine/Base/Directory.cpp b/Engine/Base/Directory.cpp
+--- a/Engine/Base/Directory.cpp	2022-12-20 18:00:19.000000000 +0300
++++ b/Engine/Base/Directory.cpp	2023-06-02 12:18:16.576625288 +0300
+@@ -19,6 +19,9 @@
+ #include <Engine/Base/Unzip.h>
+ #include <Engine/Base/FileSystem.h>
+ #include <Engine/Templates/DynamicStackArray.cpp>
++#ifndef PLATFORM_UNIX
++#include <io.h>
++#endif
+ 
+ extern CDynamicStackArray<CTFileName> _afnmBaseBrowseInc;
+ extern CDynamicStackArray<CTFileName> _afnmBaseBrowseExc;
+@@ -64,6 +67,7 @@
+     
+     const char *dirsep = CFileSystem::GetDirSeparator();
+ 
++    #ifdef PLATFORM_UNIX
+     // start listing the directory
+     CDynamicArray<CTString> *files;
+     files = _pFileSystem->FindFiles(fnmBasePath+fnmDir, "*");
+@@ -83,11 +87,30 @@
+       CTFileName fnm = fnmDir + fname;
+ 
+       // if it is a directory
+-      #ifdef PLATFORM_UNIX
+       if (_pFileSystem->IsDirectory(fnmBasePath+fnm)) {
+-      #else
+-      if (_pFileSystem->IsDirectory(fnm)) {
+-      #endif
++    #else
++    // start listing the directory
++    struct _finddata_t c_file; intptr_t hFile;
++    hFile = _findfirst( (const char *)(fnmBasePath+fnmDir+"*"), &c_file );
++    
++    // for each file in the directory
++    for (
++      BOOL bFileExists = hFile!=-1; 
++      bFileExists; 
++      bFileExists = _findnext( hFile, &c_file )==0) {
++
++      // if dummy dir (this dir, parent dir, or any dir starting with '.')
++      if (c_file.name[0]=='.') {
++        // skip it
++        continue;
++      }
++
++      // get the file's filepath
++      CTFileName fnm = fnmDir+c_file.name;
++
++      // if it is a directory
++      if (c_file.attrib&_A_SUBDIR) {
++    #endif
+         // if recursive reading
+         if (bRecursive) {
+           // add it to the list of directories to search
+@@ -101,8 +124,9 @@
+         afnm.Push() = fnm;
+       }
+     }
+-
++    #ifdef PLATFORM_UNIX
+     delete files;
++    #endif
+   }
+ }
+ 
 diff -aurN a/Engine/Base/Input.cpp b/Engine/Base/Input.cpp
 --- a/Engine/Base/Input.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/Engine/Base/Input.cpp	2023-01-05 19:38:23.767293242 +0300
++++ b/Engine/Base/Input.cpp	2023-06-02 12:18:16.576625288 +0300
 @@ -74,7 +74,7 @@
  void CInput::SetKeyNames( void)
  {
@@ -184,9 +674,21 @@ diff -aurN a/Engine/Base/Input.cpp b/Engine/Base/Input.cpp
      inp_strButtonNames[iKey] = "None";
      inp_strButtonNamesTra[iKey] = TRANS("None");
    }
+diff -aurN a/Engine/Base/Profiling.cpp b/Engine/Base/Profiling.cpp
+--- a/Engine/Base/Profiling.cpp	2022-12-20 18:00:19.000000000 +0300
++++ b/Engine/Base/Profiling.cpp	2023-06-02 12:18:16.576625288 +0300
+@@ -27,7 +27,7 @@
+ 
+ static inline __int64 ReadTSC_profile(void)
+ {
+-#if defined(PLATFORM_PANDORA) || defined(PLATFORM_PYRA) || (defined PLATFORM_RPI4) || defined(__e2k__)
++#if PLATFORM_NOT_X86
+   struct timespec tv;
+   clock_gettime(CLOCK_MONOTONIC, &tv);
+   return( (((__int64) tv.tv_sec) * 1000) + (((__int64) tv.tv_nsec) / 1000000) );
 diff -aurN a/Engine/Base/SDL/SDLInput.cpp b/Engine/Base/SDL/SDLInput.cpp
 --- a/Engine/Base/SDL/SDLInput.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/Engine/Base/SDL/SDLInput.cpp	2023-01-05 19:38:23.770626583 +0300
++++ b/Engine/Base/SDL/SDLInput.cpp	2023-06-02 12:18:16.576625288 +0300
 @@ -224,12 +224,12 @@
  static void MakeConversionTables(void)
  {
@@ -231,7 +733,7 @@ diff -aurN a/Engine/Base/SDL/SDLInput.cpp b/Engine/Base/SDL/SDLInput.cpp
        INDEX iKID  = kc.kc_iKID;
 diff -aurN a/Engine/Base/Shell.cpp b/Engine/Base/Shell.cpp
 --- a/Engine/Base/Shell.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/Engine/Base/Shell.cpp	2023-01-05 19:38:23.770626583 +0300
++++ b/Engine/Base/Shell.cpp	2023-06-02 12:18:16.576625288 +0300
 @@ -489,7 +489,7 @@
  CTString ToUpper(const CTString &strResult)
  {
@@ -252,8 +754,17 @@ diff -aurN a/Engine/Base/Shell.cpp b/Engine/Base/Shell.cpp
    return strResult;
 diff -aurN a/Engine/Base/Stream.cpp b/Engine/Base/Stream.cpp
 --- a/Engine/Base/Stream.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/Engine/Base/Stream.cpp	2023-01-05 19:38:23.770626583 +0300
-@@ -1104,7 +1104,7 @@
++++ b/Engine/Base/Stream.cpp	2023-06-02 12:18:16.579958660 +0300
+@@ -61,6 +61,8 @@
+ ULONG _ulVirtuallyAllocatedSpace = 0;
+ ULONG _ulVirtuallyAllocatedSpaceTotal = 0;
+ THREADLOCAL(CListHead *, _plhOpenedStreams, NULL);
++// portable version (all user files stored in game dir)
++INDEX _bPortableVersion = FALSE;
+ #else
+ extern INDEX fil_bPreferZips = FALSE;
+ 
+@@ -1104,7 +1106,7 @@
      return;
    }
  
@@ -262,9 +773,84 @@ diff -aurN a/Engine/Base/Stream.cpp b/Engine/Base/Stream.cpp
  }
  
  /* Write a block of data to stream. */
+@@ -1663,20 +1665,20 @@
+ 
+   //CPrintF("ExpandFilePath: %s\n",(const char *) fnmFile);
+ 
+-  if( _savegame == 0 || _persistentsym == 0 || _gamesgms == 0 ||
+-    _comsolehistory == 0 || _userdemos == 0 || _playersplr == 0 || _screenshots == 0 ) {
++  if(( _savegame == 0 || _persistentsym == 0 || _gamesgms == 0 ||
++    _comsolehistory == 0 || _userdemos == 0 || _playersplr == 0 || _screenshots == 0) && ( _bPortableVersion == FALSE)) {
+        _fnmApplicationPathTMP = _fnmUserDir;
+   } else {
+        _fnmApplicationPathTMP = _fnmApplicationPath;
+   }
+ 
+-  if( _levelsvis == 0 ) {
++  if( _levelsvis == 0 && _bPortableVersion == FALSE) {
+     if (fnmFileAbsolute.FileExt()==".vis") {
+        _fnmApplicationPathTMP = _fnmUserDir;
+     }
+   }
+ 
+-  if( _usercontrols == 0 ) {
++  if( _usercontrols == 0 && _bPortableVersion == FALSE) {
+     CTFileName _fnSControls = fnmFileAbsolute.FileName();
+     int _controls   = strncmp((const char *)_fnSControls, (const char *) "Controls", (size_t) 8 );
+     if ( _controls == 0 ) {
+diff -aurN a/Engine/Base/Stream.h b/Engine/Base/Stream.h
+--- a/Engine/Base/Stream.h	2022-12-20 18:00:19.000000000 +0300
++++ b/Engine/Base/Stream.h	2023-06-02 12:18:16.579958660 +0300
+@@ -406,6 +406,10 @@
+ ENGINE_API extern CTFileName _fnmCDPath;
+ // global string with filename of the started application
+ ENGINE_API extern CTFileName _fnmApplicationExe;
++#ifdef PLATFORM_UNIX
++// portable version (all user files stored in game dir)
++ENGINE_API extern INDEX _bPortableVersion;
++#endif
+ 
+ // application path usage funtions
+ ENGINE_API void UseApplicationPath(void);
 diff -aurN a/Engine/Base/Timer.cpp b/Engine/Base/Timer.cpp
 --- a/Engine/Base/Timer.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/Engine/Base/Timer.cpp	2023-01-05 19:38:23.770626583 +0300
++++ b/Engine/Base/Timer.cpp	2023-06-02 12:18:16.579958660 +0300
+@@ -41,7 +41,7 @@
+ // Read the Pentium TimeStampCounter (or something like that).
+ static inline __int64 ReadTSC(void)
+ {
+-#if defined(PLATFORM_PANDORA) || defined(PLATFORM_PYRA) || (defined PLATFORM_RPI4) || defined(__e2k__)
++#if PLATFORM_NOT_X86
+   struct timespec tp;
+   clock_gettime(CLOCK_MONOTONIC, &tp);
+   return( (((__int64) tp.tv_sec) * 1000000000LL) + ((__int64) tp.tv_nsec));
+@@ -154,7 +154,7 @@
+ 	          (uint64_t) tv.tv_usec;
+ }
+ 
+-#if !defined(PLATFORM_PANDORA) && !defined(PLATFORM_PYRA) && !defined(PLATFORM_RPI4) && !defined(__e2k__)
++#if !PLATFORM_NOT_X86
+ // cpu_rdtsc
+ void cpu_rdtsc(uint64_t* result)
+ {
+@@ -282,7 +282,7 @@
+ //
+ // END libcpuid functions
+ //
+-#endif // not PANDORA PYRA RPI4
++#endif // not PLATFORM_NOT_X86
+ 
+ // link with Win-MultiMedia
+ #ifdef _MSC_VER
+@@ -553,7 +553,7 @@
+   _pTimer = this;
+   tm_bInterrupt = bInterrupt;
+ 
+-#if defined(PLATFORM_PANDORA) || defined(PLATFORM_PYRA) || defined(PLATFORM_RPI4) || defined(__e2k__)
++#if PLATFORM_NOT_X86
+   // just use clock_gettime.
+   tm_llCPUSpeedHZ = tm_llPerformanceCounterFrequency = 1000000000LL;
+ #elif defined(PLATFORM_WIN32)
 @@ -624,7 +624,7 @@
      #ifdef PLATFORM_FREEBSD
        if( tm_TimerID==0x00) FatalError(TRANS("Cannot initialize multimedia timer!"));
@@ -276,7 +862,7 @@ diff -aurN a/Engine/Base/Timer.cpp b/Engine/Base/Timer.cpp
  
 diff -aurN a/Engine/Base/Translation.cpp b/Engine/Base/Translation.cpp
 --- a/Engine/Base/Translation.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/Engine/Base/Translation.cpp	2023-01-05 19:38:23.770626583 +0300
++++ b/Engine/Base/Translation.cpp	2023-06-02 12:18:16.579958660 +0300
 @@ -200,7 +200,7 @@
  ENGINE_API const char *TranslateConst(const char *str, INDEX iOffset)
  {
@@ -286,9 +872,53 @@ diff -aurN a/Engine/Base/Translation.cpp b/Engine/Base/Translation.cpp
      str+=iOffset;
    } else {
      ASSERT(FALSE);
+diff -aurN a/Engine/Base/Types.h b/Engine/Base/Types.h
+--- a/Engine/Base/Types.h	2022-12-20 18:00:19.000000000 +0300
++++ b/Engine/Base/Types.h	2023-06-02 12:18:16.579958660 +0300
+@@ -85,8 +85,22 @@
+   #define PLATFORM_LITTLEENDIAN 1
+ #endif
+ 
++#if defined(__riscv) && (__riscv_xlen == 64)
++  #define PLATFORM_RISCV64 1
++#else
++  #define PLATFORM_RISCV64 0
++#endif
++
++#if defined(__aarch64__) || defined(__arm__) || PLATFORM_RISCV64 || defined(__mips__) || defined(__s390x__) || defined(__s390__) \
++    || defined(_powerpc)  || defined(__powerpc__)  || defined(__powerpc64__)  || defined(__POWERPC__)  || defined(__ppc__) \
++    || defined(__ppc64__)  || defined(__PPC__)  || defined(__PPC64__)  || defined(_ARCH_PPC)  || defined(_ARCH_PPC64) || defined(_M_IA64) || defined(__IA64__) || defined(__e2k__)
++  #define PLATFORM_NOT_X86 1
++#else
++  #define PLATFORM_NOT_X86 0
++#endif
++
+ #if defined(__x86_64__) || defined(_M_X64) || defined(__aarch64__) || defined(_ARCH_PPC64) \
+-    || defined(_M_IA64) || defined(__IA64__) || defined(__e2k__)
++    || defined(_M_IA64) || defined(__IA64__) || defined(__e2k__) || PLATFORM_RISCV64 || defined(__powerpc64__) || defined(__s390x__) || defined(__ppc64__)
+ 
+   #define PLATFORM_64BIT 1
+ 
+diff -aurN a/Engine/Base/Unix/UnixDynamicLoader.cpp b/Engine/Base/Unix/UnixDynamicLoader.cpp
+--- a/Engine/Base/Unix/UnixDynamicLoader.cpp	2022-12-20 18:00:19.000000000 +0300
++++ b/Engine/Base/Unix/UnixDynamicLoader.cpp	2023-06-02 12:18:16.579958660 +0300
+@@ -75,6 +75,13 @@
+         fnmLib = _fnmModLibPath + _fnmMod + fnmLib.FileName() + fnmLib.FileExt();
+     }
+     module = ::dlopen((const char *)fnmLib, RTLD_LAZY | RTLD_GLOBAL);
++    #ifndef PLATFORM_MACOSX
++    if (_libvorbisfile == 0 && module == NULL) { // if libvorbisfile.so not open trying libvorbisfile.so.3
++        CPrintF("Trying load libvorbisfile.so.3 ...\n");
++        fnmLib = fnmLibname + CTString(".so.3"); // libvorbisfile.so.3
++        module = ::dlopen((const char *)fnmLib, RTLD_LAZY | RTLD_GLOBAL);
++    }
++    #endif
+     SetError();
+ }
+ 
 diff -aurN a/Engine/Base/Unzip.cpp b/Engine/Base/Unzip.cpp
 --- a/Engine/Base/Unzip.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/Engine/Base/Unzip.cpp	2023-01-05 19:38:23.770626583 +0300
++++ b/Engine/Base/Unzip.cpp	2023-06-02 12:18:16.579958660 +0300
 @@ -222,7 +222,7 @@
    }
  }
@@ -371,7 +1001,7 @@ diff -aurN a/Engine/Base/Unzip.cpp b/Engine/Base/Unzip.cpp
      // read empty
 diff -aurN a/Engine/Brushes/BrushArchive.cpp b/Engine/Brushes/BrushArchive.cpp
 --- a/Engine/Brushes/BrushArchive.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/Engine/Brushes/BrushArchive.cpp	2023-01-05 19:38:23.770626583 +0300
++++ b/Engine/Brushes/BrushArchive.cpp	2023-06-02 12:18:16.579958660 +0300
 @@ -37,8 +37,13 @@
  template CDynamicArray<CBrush3D>;
  #endif
@@ -403,7 +1033,7 @@ diff -aurN a/Engine/Brushes/BrushArchive.cpp b/Engine/Brushes/BrushArchive.cpp
                    ||bcCutter.bc_abedBorderInside.Count()>0
 diff -aurN a/Engine/Brushes/Brush.h b/Engine/Brushes/Brush.h
 --- a/Engine/Brushes/Brush.h	2022-12-20 18:00:19.000000000 +0300
-+++ b/Engine/Brushes/Brush.h	2023-01-05 19:38:23.770626583 +0300
++++ b/Engine/Brushes/Brush.h	2023-06-02 12:18:16.579958660 +0300
 @@ -399,6 +399,7 @@
    }
  #endif
@@ -431,7 +1061,7 @@ diff -aurN a/Engine/Brushes/Brush.h b/Engine/Brushes/Brush.h
    CTString bsc_strName;   // sector name
 diff -aurN a/Engine/Brushes/BrushIO.cpp b/Engine/Brushes/BrushIO.cpp
 --- a/Engine/Brushes/BrushIO.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/Engine/Brushes/BrushIO.cpp	2023-01-05 19:38:23.770626583 +0300
++++ b/Engine/Brushes/BrushIO.cpp	2023-06-02 12:18:16.579958660 +0300
 @@ -236,7 +236,7 @@
    if (bpt_toTexture.GetData()!=NULL) {
      bpt_toTexture.GetData()->AddToCRCTable();
@@ -498,7 +1128,7 @@ diff -aurN a/Engine/Brushes/BrushIO.cpp b/Engine/Brushes/BrushIO.cpp
  
 diff -aurN a/Engine/Brushes/BrushSector.cpp b/Engine/Brushes/BrushSector.cpp
 --- a/Engine/Brushes/BrushSector.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/Engine/Brushes/BrushSector.cpp	2023-01-05 19:38:23.773959924 +0300
++++ b/Engine/Brushes/BrushSector.cpp	2023-06-02 12:18:16.579958660 +0300
 @@ -34,7 +34,7 @@
  //template CDynamicArray<CBrushVertex>;
  
@@ -554,7 +1184,7 @@ diff -aurN a/Engine/Brushes/BrushSector.cpp b/Engine/Brushes/BrushSector.cpp
              ||iten->en_RenderType==CEntity::RT_FIELDBRUSH
 diff -aurN a/Engine/Classes/MovableEntity.es b/Engine/Classes/MovableEntity.es
 --- a/Engine/Classes/MovableEntity.es	2022-12-20 18:00:19.000000000 +0300
-+++ b/Engine/Classes/MovableEntity.es	2023-01-05 19:38:23.773959924 +0300
++++ b/Engine/Classes/MovableEntity.es	2023-06-02 12:18:16.579958660 +0300
 @@ -899,8 +899,8 @@
        }
  
@@ -568,7 +1198,7 @@ diff -aurN a/Engine/Classes/MovableEntity.es b/Engine/Classes/MovableEntity.es
        INDEX iContent = bsc.GetContentType();
 diff -aurN a/Engine/Classes/PlayerEntity.es b/Engine/Classes/PlayerEntity.es
 --- a/Engine/Classes/PlayerEntity.es	2022-12-20 18:00:19.000000000 +0300
-+++ b/Engine/Classes/PlayerEntity.es	2023-01-05 19:38:23.773959924 +0300
++++ b/Engine/Classes/PlayerEntity.es	2023-06-02 12:18:16.579958660 +0300
 @@ -130,7 +130,7 @@
      strm.FPrintF_t("player: %s\n", 
        (const char *) en_pcCharacter.GetName());
@@ -580,7 +1210,7 @@ diff -aurN a/Engine/Classes/PlayerEntity.es b/Engine/Classes/PlayerEntity.es
      strm.FPrintF_t("\n");
 diff -aurN a/Engine/Engine.cpp b/Engine/Engine.cpp
 --- a/Engine/Engine.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/Engine/Engine.cpp	2023-01-05 19:38:23.773959924 +0300
++++ b/Engine/Engine.cpp	2023-06-02 11:35:22.194149000 +0300
 @@ -116,13 +116,11 @@
  static INDEX sys_iGameBits = 0;
  ENGINE_API INDEX sys_iSysPath = 0;
@@ -613,7 +1243,56 @@ diff -aurN a/Engine/Engine.cpp b/Engine/Engine.cpp
    if(strGameID=="SeriousEditor") {
      _bWorldEditorApp = TRUE;
    }
-@@ -764,7 +762,7 @@
+@@ -698,7 +696,11 @@
+     _strLogFile = "SeriousSam";
+   }
+ #ifdef PLATFORM_UNIX
+-  _pConsole->Initialize(_fnmUserDir+_strLogFile+".log", 90, 512);
++  if (_bPortableVersion == FALSE) {
++    _pConsole->Initialize(_fnmUserDir+_strLogFile+".log", 90, 512);
++  } else {
++    _pConsole->Initialize(_fnmApplicationPath + _strLogFile + ".log", 90, 512);
++  }
+ #else
+   _pConsole->Initialize(_fnmApplicationPath + _strLogFile + ".log", 90, 512);
+ #endif
+@@ -745,16 +747,29 @@
+ 
+   // get library path for mods
+   _fnmModLibPath = "";
+-  if( sys_iSysPath == 1 && sys_iGameBits == 64 && _pFileSystem->IsDirectory((const char *) "/usr/lib/x86_64-linux-gnu")) {
+-    _fnmModLibPath = "/usr/lib/x86_64-linux-gnu/" + strGameID + "/"; 
+-  } else if( sys_iSysPath == 1 && sys_iGameBits == 32 && _pFileSystem->IsDirectory((const char *) "/usr/lib/i386-linux-gnu")) {
++  if( sys_iSysPath == 1 && sys_iGameBits == 64 && _pFileSystem->IsDirectory((const char *) "/usr/lib/aarch64-linux-gnu/" + strGameID)) {
++    _fnmModLibPath = "/usr/lib/aarch64-linux-gnu/" + strGameID + "/"; 
++  } else if( sys_iSysPath == 1 && sys_iGameBits == 32 && _pFileSystem->IsDirectory((const char *) "/usr/lib/arm-linux-gnueabihf/" + strGameID)) {
++    _fnmModLibPath = "/usr/lib/arm-linux-gnueabihf/" + strGameID + "/";
++  } else if( sys_iSysPath == 1 && sys_iGameBits == 64 && _pFileSystem->IsDirectory((const char *) "/usr/lib/riscv64-linux-gnu/" + strGameID)) {
++    _fnmModLibPath = "/usr/lib/riscv64-linux-gnu/" + strGameID + "/";
++  } else if( sys_iSysPath == 1 && sys_iGameBits == 64 && _pFileSystem->IsDirectory((const char *) "/usr/lib/s390x-linux-gnu/" + strGameID)) {
++    _fnmModLibPath = "/usr/lib/s390x-linux-gnu/" + strGameID + "/"; 
++  } else if( sys_iSysPath == 1 && sys_iGameBits == 64 && _pFileSystem->IsDirectory((const char *) "/usr/lib/powerpc64-linux-gnu/" + strGameID)) {
++    _fnmModLibPath = "/usr/lib/powerpc64-linux-gnu/" + strGameID + "/"; 
++  } else if( sys_iSysPath == 1 && sys_iGameBits == 64 && _pFileSystem->IsDirectory((const char *) "/usr/lib/x86_64-linux-gnu/" + strGameID)) {
++    _fnmModLibPath = "/usr/lib/x86_64-linux-gnu/" + strGameID + "/";
++  } else if( sys_iSysPath == 1 && sys_iGameBits == 32 && _pFileSystem->IsDirectory((const char *) "/usr/lib/i386-linux-gnu/" + strGameID)) {
+     _fnmModLibPath = "/usr/lib/i386-linux-gnu/" + strGameID + "/";
+-  } else if( sys_iSysPath == 1 && sys_iGameBits == 64 && _pFileSystem->IsDirectory((const char *) "/usr/lib64")) {
++  } else if( sys_iSysPath == 1 && sys_iGameBits == 64 && _pFileSystem->IsDirectory((const char *) "/usr/lib64/" + strGameID)) {
+     _fnmModLibPath = "/usr/lib64/" + strGameID + "/";
+-  } else if( sys_iSysPath == 1 && sys_iGameBits == 32 && _pFileSystem->IsDirectory((const char *) "/usr/lib")) {
++  } else if( sys_iSysPath == 1 && sys_iGameBits == 32 && _pFileSystem->IsDirectory((const char *) "/usr/lib/" + strGameID)) {
+     _fnmModLibPath = "/usr/lib/" + strGameID + "/";
+-  } else {
++  } else if( sys_iSysPath == 0 ) {
+     _fnmModLibPath = _fnmApplicationPath;
++  } else {
++    CPrintF(TRANSV("ERROR: Game libraries not ound!\n"));
++    FatalError(TRANSV("Failed to search game libraries installed!\nPlease reinstall the game.\nSee the log for more details.\nGame log is here: ~/.local/share/Serious-Engine/%s/SeriousSam.log"),(const char *) strGameID);
+   }
+ 
+   if( sys_iSysPath == 1 ) { // search game data
+@@ -764,7 +779,7 @@
  
      if( access((const char *) _fnmUserDir+_strLogFile+".cfg", F_OK) == 0 ) {
        _fd = open((const char *) _fnmUserDir+_strLogFile+".cfg", O_RDONLY,S_IRUSR);
@@ -622,7 +1301,7 @@ diff -aurN a/Engine/Engine.cpp b/Engine/Engine.cpp
        _fnmUserDataPath = (CTString)_path + "/";
        close(_fd);
        CPrintF(TRANSV("Testing home path: %s\n"), (const char *) _fnmUserDataPath);
-@@ -808,7 +806,7 @@
+@@ -808,12 +823,12 @@
            //_fnmApplicationPath = (CTFileName) _PATH + "/";
            CPrintF(TRANSV("Found home path: %s\n"), (const char *) _fnm_home_TestFile);
            _fd = open((const char *) _fnmUserDir+_strLogFile+".cfg", O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR);
@@ -631,9 +1310,15 @@ diff -aurN a/Engine/Engine.cpp b/Engine/Engine.cpp
            close(_fd);
          } else {
            CPrintF(TRANSV("ERROR: Game data not ound!\n"));
+           _fnmUserDataPath = "";
+-          FatalError(TRANS("Failed to search game data!\nPlease put the game data in the paths:\n/usr/share/%s/\n or %s\n or somewhere in your home directory"),(const char *) strGameID,(const char *) _fnmUserDir);
++          FatalError(TRANSV("Failed to search game data!\nPlease put the game data in the paths:\n/usr/share/%s/\n or %s\n or somewhere in your home directory\nSee the log for more details.\nGame log is here: ~/.local/share/Serious-Engine/%s/SeriousSam.log"),(const char *) strGameID,(const char *) _fnmUserDir,(const char *) strGameID);
+         }
+       } 
+     } else {
 diff -aurN a/Engine/Entities/EntityClass.cpp b/Engine/Entities/EntityClass.cpp
 --- a/Engine/Entities/EntityClass.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/Engine/Entities/EntityClass.cpp	2023-01-05 19:38:23.773959924 +0300
++++ b/Engine/Entities/EntityClass.cpp	2023-06-02 12:18:16.583292030 +0300
 @@ -499,7 +499,7 @@
    // for each component
    for (INDEX iComponent=0; iComponent<dec_ctComponents; iComponent++) {
@@ -645,7 +1330,7 @@ diff -aurN a/Engine/Entities/EntityClass.cpp b/Engine/Entities/EntityClass.cpp
        if (dec_aecComponents[iComponent].ec_ectType==ectType) {
 diff -aurN a/Engine/Entities/EntityCopying.cpp b/Engine/Entities/EntityCopying.cpp
 --- a/Engine/Entities/EntityCopying.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/Engine/Entities/EntityCopying.cpp	2023-01-05 19:38:23.773959924 +0300
++++ b/Engine/Entities/EntityCopying.cpp	2023-06-02 12:18:16.583292030 +0300
 @@ -163,7 +163,7 @@
      }
    // if this is a terrain
@@ -657,7 +1342,7 @@ diff -aurN a/Engine/Entities/EntityCopying.cpp b/Engine/Entities/EntityCopying.c
    } if ( enOther.en_RenderType == RT_MODEL || en_RenderType == RT_EDITORMODEL) {
 diff -aurN a/Engine/Entities/Entity.cpp b/Engine/Entities/Entity.cpp
 --- a/Engine/Entities/Entity.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/Engine/Entities/Entity.cpp	2023-01-05 19:38:23.773959924 +0300
++++ b/Engine/Entities/Entity.cpp	2023-06-02 12:18:16.583292030 +0300
 @@ -1830,7 +1830,7 @@
    // make oriented bounding box of the entity
    FLOATobbox3D boxEntity = FLOATobbox3D(en_boxSpatialClassification, 
@@ -717,7 +1402,7 @@ diff -aurN a/Engine/Entities/Entity.cpp b/Engine/Entities/Entity.cpp
      }
 diff -aurN a/Engine/Entities/FieldBSPTesting.cpp b/Engine/Entities/FieldBSPTesting.cpp
 --- a/Engine/Entities/FieldBSPTesting.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/Engine/Entities/FieldBSPTesting.cpp	2023-01-05 19:38:23.773959924 +0300
++++ b/Engine/Entities/FieldBSPTesting.cpp	2023-06-02 12:18:16.583292030 +0300
 @@ -43,11 +43,11 @@
      const FLOAT3D &v = pen->en_plPlacement.pl_PositionVector;
      const FLOATmatrix3D &m = pen->en_mRotation;
@@ -743,7 +1428,7 @@ diff -aurN a/Engine/Entities/FieldBSPTesting.cpp b/Engine/Entities/FieldBSPTesti
        }
 diff -aurN a/Engine/GameAgent/GameAgent.cpp b/Engine/GameAgent/GameAgent.cpp
 --- a/Engine/GameAgent/GameAgent.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/Engine/GameAgent/GameAgent.cpp	2023-01-05 19:38:23.773959924 +0300
++++ b/Engine/GameAgent/GameAgent.cpp	2023-06-02 12:18:16.583292030 +0300
 @@ -179,11 +179,11 @@
  
  */
@@ -770,7 +1455,7 @@ diff -aurN a/Engine/GameAgent/GameAgent.cpp b/Engine/GameAgent/GameAgent.cpp
            CTString strIP;
 diff -aurN a/Engine/Graphics/Adapter.cpp b/Engine/Graphics/Adapter.cpp
 --- a/Engine/Graphics/Adapter.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/Engine/Graphics/Adapter.cpp	2023-01-05 19:38:23.777293265 +0300
++++ b/Engine/Graphics/Adapter.cpp	2023-06-02 12:18:16.583292030 +0300
 @@ -380,7 +380,7 @@
    const int total = SDL_GetNumDisplayModes(dpy);
    for (int i = 0; i < total; i++)
@@ -780,9 +1465,21 @@ diff -aurN a/Engine/Graphics/Adapter.cpp b/Engine/Graphics/Adapter.cpp
        break;
  
      SDL_DisplayMode mode;
+diff -aurN a/Engine/Graphics/DrawPort.cpp b/Engine/Graphics/DrawPort.cpp
+--- a/Engine/Graphics/DrawPort.cpp	2022-12-20 18:00:19.000000000 +0300
++++ b/Engine/Graphics/DrawPort.cpp	2023-06-02 12:18:16.583292030 +0300
+@@ -1168,7 +1168,7 @@
+   // if the point is out or at the edge of drawport, it is not visible by default
+   if( pixI<1 || pixI>dp_Width-2 || pixJ<1 || pixJ>dp_Height-2) return FALSE;
+ 
+-  #ifdef __arm__
++  #if defined(__arm__) || defined(PLATFORM_RISCV64)
+   // Assuming here that all ARM machine use GLES based GPU, were DEPTH reading is probably not available (or super slow)
+   return FALSE;
+   #endif
 diff -aurN a/Engine/Graphics/Font.cpp b/Engine/Graphics/Font.cpp
 --- a/Engine/Graphics/Font.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/Engine/Graphics/Font.cpp	2023-01-05 19:38:23.777293265 +0300
++++ b/Engine/Graphics/Font.cpp	2023-06-02 12:18:16.583292030 +0300
 @@ -149,7 +149,7 @@
  
    // find number of letters in line (assuming that the 1st line represents the width of every line)
@@ -806,9 +1503,42 @@ diff -aurN a/Engine/Graphics/Font.cpp b/Engine/Graphics/Font.cpp
        // get char params
        unsigned char chrLetter = strLettersOrder[iLetter++];
        // reset current letter's width
+diff -aurN a/Engine/Graphics/Gfx_Vulkan.cpp b/Engine/Graphics/Gfx_Vulkan.cpp
+--- a/Engine/Graphics/Gfx_Vulkan.cpp	2022-12-20 18:00:19.000000000 +0300
++++ b/Engine/Graphics/Gfx_Vulkan.cpp	2023-06-02 12:18:16.583292030 +0300
+@@ -148,7 +148,7 @@
+   Reset_Vulkan();
+ #ifdef PLATFORM_WIN32
+   extern void ForceModernHardwareGraphicsSettings();
+-  ForceModernHardwareGraphicsSettings();             // note: this is not necessary for linux
++  //ForceModernHardwareGraphicsSettings();             // note: this is not necessary for linux (added: for windows too)
+ #endif
+ }
+ 
+@@ -993,7 +993,7 @@
+   VkResult r;
+   uint32_t nextImageIndex;
+  
+-  if (gl_VkSwapchain == NULL) {    
++  if (gl_VkSwapchain == 0x00) { // NULL
+     CPrintF("Vulkan warrning: VkSwapchain == NULL...\n");
+   }
+ 
+diff -aurN a/Engine/Graphics/Gfx_wrapper_Vulkan.cpp b/Engine/Graphics/Gfx_wrapper_Vulkan.cpp
+--- a/Engine/Graphics/Gfx_wrapper_Vulkan.cpp	2022-12-20 18:00:19.000000000 +0300
++++ b/Engine/Graphics/Gfx_wrapper_Vulkan.cpp	2023-06-02 12:18:16.586625402 +0300
+@@ -569,7 +569,7 @@
+ 
+ 
+ // draw prepared arrays
+-static void svk_DrawElements(INDEX ctElem, INDEX *pidx)
++static void svk_DrawElements(INDEX ctElem, INDEX_T *pidx)
+ {
+   ASSERT(_pGfx->gl_eCurrentAPI == GAT_VK);
+ #ifndef NDEBUG
 diff -aurN a/Engine/Graphics/TextureEffects.cpp b/Engine/Graphics/TextureEffects.cpp
 --- a/Engine/Graphics/TextureEffects.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/Engine/Graphics/TextureEffects.cpp	2023-01-05 19:38:23.780626606 +0300
++++ b/Engine/Graphics/TextureEffects.cpp	2023-06-02 12:18:16.586625402 +0300
 @@ -692,7 +692,7 @@
      ffp.pixV+=ffp.ubSpeed;
      // when falled down reinitialize
@@ -827,9 +1557,27 @@ diff -aurN a/Engine/Graphics/TextureEffects.cpp b/Engine/Graphics/TextureEffects
          ULONG ulNewDensity = RNDW&slDensity;
          ulNew -= ulNewDensity;
          SLONG slDifusion = (SLONG)asbMod3Sub1Table[ulNewDensity]; // (SLONG)(ulNewDensity%3-1);
+diff -aurN a/Engine/Graphics/Vulkan/VulkanInclude.h b/Engine/Graphics/Vulkan/VulkanInclude.h
+--- a/Engine/Graphics/Vulkan/VulkanInclude.h	2022-12-20 18:00:19.000000000 +0300
++++ b/Engine/Graphics/Vulkan/VulkanInclude.h	2023-06-02 12:18:16.586625402 +0300
+@@ -21,10 +21,13 @@
+ 
+ #ifdef SE1_VULKAN
+ 
+-//#define VK_USE_PLATFORM_WIN32_KHR
++#ifdef _MSC_VER
++#define VK_USE_PLATFORM_WIN32_KHR
++#else
+ #define VK_USE_PLATFORM_XLIB_KHR
+ #define VK_USE_PLATFORM_XCB_KHR
+ #define VK_USE_PLATFORM_DISPLAY_KHR
++#endif
+ 
+ #include <vulkan/vulkan.h>
+ #include <Engine/Graphics/Vulkan/SvkVertex.h>
 diff -aurN a/Engine/Light/LayerMixer.cpp b/Engine/Light/LayerMixer.cpp
 --- a/Engine/Light/LayerMixer.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/Engine/Light/LayerMixer.cpp	2023-01-05 19:38:23.787293289 +0300
++++ b/Engine/Light/LayerMixer.cpp	2023-06-02 12:18:16.593292144 +0300
 @@ -1,4 +1,6 @@
  /* Copyright (c) 2002-2012 Croteam Ltd. 
 +Copyright (c) 2021 by ZCaliptium.
@@ -842,7 +1590,7 @@ diff -aurN a/Engine/Light/LayerMixer.cpp b/Engine/Light/LayerMixer.cpp
  #include <Engine/Templates/DynamicArray.cpp>
  
 +#if (defined(__x86_64__) && defined(__GNUC__)) || (defined(PLATFORM_64BIT) && defined(_MSC_VER)) \
-+  && (!defined(PLATFORM_PANDORA) || !defined(PLATFORM_PYRA) || !defined(PLATFORM_RPI4) || !defined(__e2k__))
++  && !PLATFORM_NOT_X86
 +#include <xmmintrin.h>
 +#endif
 +
@@ -858,7 +1606,7 @@ diff -aurN a/Engine/Light/LayerMixer.cpp b/Engine/Light/LayerMixer.cpp
  }
  
 +#if (defined(__x86_64__) && defined(__GNUC__)) || (defined(PLATFORM_64BIT) && defined(_MSC_VER)) \
-+  && (!defined(PLATFORM_PANDORA) || !defined(PLATFORM_PYRA) || !defined(PLATFORM_RPI4) || !defined(__e2k__))
++  && !PLATFORM_NOT_X86
 +inline UBYTE SaturateSignedWordToUnsignedByte(SLONG sl)
 +{
 +  if (sl <= -1) {
@@ -878,7 +1626,7 @@ diff -aurN a/Engine/Light/LayerMixer.cpp b/Engine/Light/LayerMixer.cpp
  
 -#else
 +#elif (defined(__x86_64__) && defined(__GNUC__)) || (defined(PLATFORM_64BIT) && defined(_MSC_VER)) \
-+  && (!defined(PLATFORM_PANDORA) || !defined(PLATFORM_PYRA) || !defined(PLATFORM_RPI4) || !defined(__e2k__))
++  && !PLATFORM_NOT_X86
 +
 +  // prepare color
 +  __m64 tmp_mm7;
@@ -1047,7 +1795,7 @@ diff -aurN a/Engine/Light/LayerMixer.cpp b/Engine/Light/LayerMixer.cpp
  
 -#else   // Portable C version...
 +#elif (defined(__x86_64__) && defined(__GNUC__)) || (defined(PLATFORM_64BIT) && defined(_MSC_VER)) \
-+  && (!defined(PLATFORM_PANDORA) || !defined(PLATFORM_PYRA) || !defined(PLATFORM_RPI4) || !defined(__e2k__))
++  && !PLATFORM_NOT_X86
 +
 +  // prepare color
 +  __m64 tmp_mm7;
@@ -1225,7 +1973,7 @@ diff -aurN a/Engine/Light/LayerMixer.cpp b/Engine/Light/LayerMixer.cpp
    );
  
 +#elif (defined(__x86_64__) && defined(__GNUC__)) || (defined(PLATFORM_64BIT) && defined(_MSC_VER)) \
-+  && (!defined(PLATFORM_PANDORA) || !defined(PLATFORM_PYRA) || !defined(PLATFORM_RPI4) || !defined(__e2k__))
++  && !PLATFORM_NOT_X86
 +
 +  // for each pixel in the shadow map
 +
@@ -1393,7 +2141,7 @@ diff -aurN a/Engine/Light/LayerMixer.cpp b/Engine/Light/LayerMixer.cpp
    );
  
 +#elif (defined(__x86_64__) && defined(__GNUC__)) || (defined(PLATFORM_64BIT) && defined(_MSC_VER)) \
-+  && (!defined(PLATFORM_PANDORA) || !defined(PLATFORM_PYRA) || !defined(PLATFORM_RPI4) || !defined(__e2k__))
++  && !PLATFORM_NOT_X86
 +
 +  // prepare color
 +  __m64 tmp_mm7;
@@ -1573,7 +2321,7 @@ diff -aurN a/Engine/Light/LayerMixer.cpp b/Engine/Light/LayerMixer.cpp
  }
 diff -aurN a/Engine/Light/LightSource.cpp b/Engine/Light/LightSource.cpp
 --- a/Engine/Light/LightSource.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/Engine/Light/LightSource.cpp	2023-01-05 19:38:23.787293289 +0300
++++ b/Engine/Light/LightSource.cpp	2023-06-02 12:18:16.593292144 +0300
 @@ -420,7 +420,7 @@
    }
  
@@ -1594,7 +2342,7 @@ diff -aurN a/Engine/Light/LightSource.cpp b/Engine/Light/LightSource.cpp
              }
 diff -aurN a/Engine/Math/Float.cpp b/Engine/Math/Float.cpp
 --- a/Engine/Math/Float.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/Engine/Math/Float.cpp	2023-01-05 19:38:23.787293289 +0300
++++ b/Engine/Math/Float.cpp	2023-06-02 12:18:16.593292144 +0300
 @@ -17,11 +17,16 @@
  
  #include <Engine/Math/Float.h>
@@ -1614,7 +2362,7 @@ diff -aurN a/Engine/Math/Float.cpp b/Engine/Math/Float.cpp
  #if (defined _MSC_VER)
 diff -aurN a/Engine/Network/Buffer.cpp b/Engine/Network/Buffer.cpp
 --- a/Engine/Network/Buffer.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/Engine/Network/Buffer.cpp	2023-01-05 19:38:23.790626630 +0300
++++ b/Engine/Network/Buffer.cpp	2023-06-02 12:18:16.596625514 +0300
 @@ -383,7 +383,7 @@
    slbhSize = ReadBytes(&bh, sizeof(bh));
  
@@ -1653,7 +2401,7 @@ diff -aurN a/Engine/Network/Buffer.cpp b/Engine/Network/Buffer.cpp
        slReceivedSoFar = 0;
 diff -aurN a/Engine/Network/CommunicationInterface.cpp b/Engine/Network/CommunicationInterface.cpp
 --- a/Engine/Network/CommunicationInterface.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/Engine/Network/CommunicationInterface.cpp	2023-01-05 19:38:23.793959971 +0300
++++ b/Engine/Network/CommunicationInterface.cpp	2023-06-02 12:18:16.596625514 +0300
 @@ -362,7 +362,7 @@
        cm_strName = net_strLocalHost;
        cm_ulLocalHost = StringToAddress(cm_strName);
@@ -1674,7 +2422,7 @@ diff -aurN a/Engine/Network/CommunicationInterface.cpp b/Engine/Network/Communic
            if (net_bReportMiscErrors) {
 diff -aurN a/Engine/Network/CPacket.cpp b/Engine/Network/CPacket.cpp
 --- a/Engine/Network/CPacket.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/Engine/Network/CPacket.cpp	2023-01-05 19:38:23.790626630 +0300
++++ b/Engine/Network/CPacket.cpp	2023-06-02 12:18:16.596625514 +0300
 @@ -184,7 +184,7 @@
  	ASSERT(pv != NULL);
  	ASSERT(pa_pubPacketData != NULL);
@@ -1684,9 +2432,41 @@ diff -aurN a/Engine/Network/CPacket.cpp b/Engine/Network/CPacket.cpp
  		return FALSE;
  	}
  	
+diff -aurN a/Engine/Network/Network.cpp b/Engine/Network/Network.cpp
+--- a/Engine/Network/Network.cpp	2022-12-20 18:00:19.000000000 +0300
++++ b/Engine/Network/Network.cpp	2023-06-02 12:18:16.596625514 +0300
+@@ -89,6 +89,7 @@
+ static FLOAT _bStartDemoRecordingNextTime = FALSE;
+ static FLOAT _bStopDemoRecordingNextTime = FALSE;
+ static INDEX dem_iRecordedNumber = 0;
++static INDEX net_bReloadTexOnLevelChange = FALSE;
+ 
+ // network control
+ __extern INDEX ser_bReportSyncOK   = FALSE;
+@@ -896,6 +897,7 @@
+   _pShell->DeclareSymbol("persistent user CTString ga_strServer;", (void *)&ga_strServer);
+   _pShell->DeclareSymbol("persistent user CTString ga_strMSLegacy;", (void *)&ga_strMSLegacy);
+   _pShell->DeclareSymbol("persistent user INDEX ga_bMSLegacy;", (void *)&ga_bMSLegacy);
++  _pShell->DeclareSymbol("persistent user INDEX net_bReloadTexOnLevelChange;", (void *)&net_bReloadTexOnLevelChange);
+ 
+ }
+ 
+@@ -1115,6 +1117,12 @@
+   strmFile.WriteID_t("GAME");
+   ga_sesSessionState.Write_t(&strmFile);
+   strmFile.WriteID_t("GEND");   // game end
++
++  // Reload textures on level change
++  if (fnmGame.Matches("*\\QuickSave*") && net_bReloadTexOnLevelChange) {
++    extern void ReloadTextures(void);
++    ReloadTextures();
++  }
+ }
+ 
+ /*
 diff -aurN a/Engine/Network/PlayerBuffer.cpp b/Engine/Network/PlayerBuffer.cpp
 --- a/Engine/Network/PlayerBuffer.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/Engine/Network/PlayerBuffer.cpp	2023-01-05 19:38:23.793959971 +0300
++++ b/Engine/Network/PlayerBuffer.cpp	2023-06-02 12:18:16.596625514 +0300
 @@ -119,7 +119,7 @@
  
    // create a new delta action packet between last sent and current action
@@ -1698,7 +2478,7 @@ diff -aurN a/Engine/Network/PlayerBuffer.cpp b/Engine/Network/PlayerBuffer.cpp
    // if the client that message is sent to owns the player
 diff -aurN a/Engine/Network/PlayerTarget.cpp b/Engine/Network/PlayerTarget.cpp
 --- a/Engine/Network/PlayerTarget.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/Engine/Network/PlayerTarget.cpp	2023-01-05 19:38:23.793959971 +0300
++++ b/Engine/Network/PlayerTarget.cpp	2023-06-02 12:18:16.596625514 +0300
 @@ -135,7 +135,7 @@
    // create a new action packet from last received packet and given delta
    plt_paPreLastAction = plt_paLastAction;
@@ -1710,7 +2490,7 @@ diff -aurN a/Engine/Network/PlayerTarget.cpp b/Engine/Network/PlayerTarget.cpp
    plt_paLastAction.pa_llCreated = llTag;
 diff -aurN a/Engine/Network/Server.cpp b/Engine/Network/Server.cpp
 --- a/Engine/Network/Server.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/Engine/Network/Server.cpp	2023-01-05 19:38:23.793959971 +0300
++++ b/Engine/Network/Server.cpp	2023-06-02 12:18:16.596625514 +0300
 @@ -1526,7 +1526,7 @@
          continue;
        }
@@ -1722,7 +2502,7 @@ diff -aurN a/Engine/Network/Server.cpp b/Engine/Network/Server.cpp
        }
 diff -aurN a/Engine/Rendering/RenderAdding.cpp b/Engine/Rendering/RenderAdding.cpp
 --- a/Engine/Rendering/RenderAdding.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/Engine/Rendering/RenderAdding.cpp	2023-01-05 19:38:23.793959971 +0300
++++ b/Engine/Rendering/RenderAdding.cpp	2023-06-02 12:18:16.596625514 +0300
 @@ -624,7 +624,7 @@
      // if this is terrain entity
      } else if( iten->en_RenderType==CEntity::RT_TERRAIN) {
@@ -1761,7 +2541,7 @@ diff -aurN a/Engine/Rendering/RenderAdding.cpp b/Engine/Rendering/RenderAdding.c
              AddActiveSector(itbsc.Current());
 diff -aurN a/Engine/Rendering/Render_internal.h b/Engine/Rendering/Render_internal.h
 --- a/Engine/Rendering/Render_internal.h	2022-12-20 18:00:19.000000000 +0300
-+++ b/Engine/Rendering/Render_internal.h	2023-01-05 19:38:23.793959971 +0300
++++ b/Engine/Rendering/Render_internal.h	2023-06-02 12:18:16.599958886 +0300
 @@ -287,10 +287,8 @@
    CEntity           *re_penViewer;    // entity that is viewed from
    CDynamicContainer<CScreenPolygon> *re_pcspoViewPolygons;  // polygons that is viewed from (for mirrors)
@@ -1777,7 +2557,7 @@ diff -aurN a/Engine/Rendering/Render_internal.h b/Engine/Rendering/Render_intern
    FLOAT re_fEdgeOffsetI;
 diff -aurN a/Engine/Rendering/RenderModels.cpp b/Engine/Rendering/RenderModels.cpp
 --- a/Engine/Rendering/RenderModels.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/Engine/Rendering/RenderModels.cpp	2023-01-05 19:38:23.793959971 +0300
++++ b/Engine/Rendering/RenderModels.cpp	2023-06-02 12:18:16.596625514 +0300
 @@ -29,12 +29,19 @@
  {
    BOOL bHasAlpha0 = dm0.dm_ulFlags&DMF_HASALPHA;
@@ -1805,7 +2585,7 @@ diff -aurN a/Engine/Rendering/RenderModels.cpp b/Engine/Rendering/RenderModels.c
  static int qsort_CompareDelayedModels( const void *ppdm0, const void *ppdm1)
 diff -aurN a/Engine/Ska/ModelInstance.cpp b/Engine/Ska/ModelInstance.cpp
 --- a/Engine/Ska/ModelInstance.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/Engine/Ska/ModelInstance.cpp	2023-01-05 19:38:23.797293312 +0300
++++ b/Engine/Ska/ModelInstance.cpp	2023-06-02 12:18:16.599958886 +0300
 @@ -84,7 +84,11 @@
  
    _yy_mi = &mi;
@@ -1836,7 +2616,7 @@ diff -aurN a/Engine/Ska/ModelInstance.cpp b/Engine/Ska/ModelInstance.cpp
  
 diff -aurN a/Engine/Ska/ParsingSmbs.h b/Engine/Ska/ParsingSmbs.h
 --- a/Engine/Ska/ParsingSmbs.h	2022-12-20 18:00:19.000000000 +0300
-+++ b/Engine/Ska/ParsingSmbs.h	2023-01-05 19:38:23.797293312 +0300
++++ b/Engine/Ska/ParsingSmbs.h	2023-06-02 12:18:16.599958886 +0300
 @@ -14,10 +14,17 @@
  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA. */
  
@@ -1857,7 +2637,7 @@ diff -aurN a/Engine/Ska/ParsingSmbs.h b/Engine/Ska/ParsingSmbs.h
  
 diff -aurN a/Engine/Ska/RMRender.cpp b/Engine/Ska/RMRender.cpp
 --- a/Engine/Ska/RMRender.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/Engine/Ska/RMRender.cpp	2023-01-05 19:38:23.797293312 +0300
++++ b/Engine/Ska/RMRender.cpp	2023-06-02 12:18:16.599958886 +0300
 @@ -465,7 +465,7 @@
        avVertices.Push(ctvtx);
        // for each vertex in prepared mesh
@@ -1905,7 +2685,7 @@ diff -aurN a/Engine/Ska/RMRender.cpp b/Engine/Ska/RMRender.cpp
      gfxDisableDepthTest();
 diff -aurN a/Engine/Sound/SoundDecoder.cpp b/Engine/Sound/SoundDecoder.cpp
 --- a/Engine/Sound/SoundDecoder.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/Engine/Sound/SoundDecoder.cpp	2023-01-05 19:38:23.797293312 +0300
++++ b/Engine/Sound/SoundDecoder.cpp	2023-06-02 12:18:16.599958886 +0300
 @@ -62,7 +62,7 @@
    // get amp11lib function pointers
    const char *strName;
@@ -1917,7 +2697,7 @@ diff -aurN a/Engine/Sound/SoundDecoder.cpp b/Engine/Sound/SoundDecoder.cpp
        p##name = (output (__stdcall*) inputs) _hAmp11lib->FindSymbol(strName); \
 diff -aurN a/Engine/Templates/BSP.cpp b/Engine/Templates/BSP.cpp
 --- a/Engine/Templates/BSP.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/Engine/Templates/BSP.cpp	2023-01-05 19:38:23.797293312 +0300
++++ b/Engine/Templates/BSP.cpp	2023-06-02 12:18:16.599958886 +0300
 @@ -1513,12 +1513,7 @@
    for(INDEX iNode=0; iNode<ctNodes; iNode++) {
      BSPNode<Type, iDimensions> &bn = bt_abnNodes[iNode];
@@ -1944,7 +2724,7 @@ diff -aurN a/Engine/Templates/BSP.cpp b/Engine/Templates/BSP.cpp
      INDEX iFront;
 diff -aurN a/Engine/Terrain/Terrain.cpp b/Engine/Terrain/Terrain.cpp
 --- a/Engine/Terrain/Terrain.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/Engine/Terrain/Terrain.cpp	2023-01-05 19:38:23.800626653 +0300
++++ b/Engine/Terrain/Terrain.cpp	2023-06-02 12:18:16.603292256 +0300
 @@ -545,7 +545,7 @@
  void CTerrain::SetShadowMapsSize(INDEX iShadowMapAspect, INDEX iShadingMapAspect)
  {
@@ -1992,7 +2772,7 @@ diff -aurN a/Engine/Terrain/Terrain.cpp b/Engine/Terrain/Terrain.cpp
  
 diff -aurN a/Engine/Terrain/TerrainMisc.cpp b/Engine/Terrain/TerrainMisc.cpp
 --- a/Engine/Terrain/TerrainMisc.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/Engine/Terrain/TerrainMisc.cpp	2023-01-05 19:38:23.800626653 +0300
++++ b/Engine/Terrain/TerrainMisc.cpp	2023-06-02 12:18:16.603292256 +0300
 @@ -47,7 +47,7 @@
  SLONG  _slSharedTopMapSize = 0; // Size of shared memory allocated for topmap regeneration
  #endif
@@ -2013,7 +2793,7 @@ diff -aurN a/Engine/Terrain/TerrainMisc.cpp b/Engine/Terrain/TerrainMisc.cpp
                            INDEX_T **paiInd, INDEX &ctVtx,INDEX &ctInd,BOOL bFixSize/*=FALSE*/)
 diff -aurN a/Engine/Terrain/TerrainRayCasting.cpp b/Engine/Terrain/TerrainRayCasting.cpp
 --- a/Engine/Terrain/TerrainRayCasting.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/Engine/Terrain/TerrainRayCasting.cpp	2023-01-05 19:38:23.800626653 +0300
++++ b/Engine/Terrain/TerrainRayCasting.cpp	2023-06-02 12:18:16.603292256 +0300
 @@ -197,7 +197,7 @@
    return fDistance;
  }
@@ -2025,7 +2805,7 @@ diff -aurN a/Engine/Terrain/TerrainRayCasting.cpp b/Engine/Terrain/TerrainRayCas
  #define LEFT	  1
 diff -aurN a/Engine/Terrain/TerrainRender.cpp b/Engine/Terrain/TerrainRender.cpp
 --- a/Engine/Terrain/TerrainRender.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/Engine/Terrain/TerrainRender.cpp	2023-01-05 19:38:23.800626653 +0300
++++ b/Engine/Terrain/TerrainRender.cpp	2023-06-02 12:18:16.603292256 +0300
 @@ -240,7 +240,7 @@
          // First vertex is lerped between top and bottom vertices
          Lerp(pavDst[0],pavSrc[0],pavSrc[-tt.tt_ctLodVtxX],pavSrc[tt.tt_ctLodVtxX],fLerpFactor);
@@ -2055,7 +2835,7 @@ diff -aurN a/Engine/Terrain/TerrainRender.cpp b/Engine/Terrain/TerrainRender.cpp
    extern FLOAT3D _vHitBegin;
 diff -aurN a/Entities/Common/HUD.cpp b/Entities/Common/HUD.cpp
 --- a/Entities/Common/HUD.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/Entities/Common/HUD.cpp	2023-01-05 19:38:23.807293335 +0300
++++ b/Entities/Common/HUD.cpp	2023-06-02 12:18:16.606625626 +0300
 @@ -15,8 +15,8 @@
  #define TOP_HEALTH 100
  
@@ -2069,7 +2849,7 @@ diff -aurN a/Entities/Common/HUD.cpp b/Entities/Common/HUD.cpp
  extern __declspec(dllimport) FLOAT _fFragScorerHeightAdjuster;
 diff -aurN a/Entities/DestroyableArchitecture.es b/Entities/DestroyableArchitecture.es
 --- a/Entities/DestroyableArchitecture.es	2022-12-20 18:00:19.000000000 +0300
-+++ b/Entities/DestroyableArchitecture.es	2023-01-05 19:38:23.810626676 +0300
++++ b/Entities/DestroyableArchitecture.es	2023-06-02 12:18:16.609958998 +0300
 @@ -219,7 +219,7 @@
  
    void DestroyObelisk()
@@ -2088,9 +2868,22 @@ diff -aurN a/Entities/DestroyableArchitecture.es b/Entities/DestroyableArchitect
      {
        DebrisInfo &di = _PylonDebrisInfo[iDebris];
        FLOAT3D vOffset = FLOAT3D( di.vOffset[0], di.vOffset[1], di.vOffset[2])*m_fStretch;
+diff -aurN a/Entities/Lightning.es b/Entities/Lightning.es
+--- a/Entities/Lightning.es	2022-12-20 18:00:19.000000000 +0300
++++ b/Entities/Lightning.es	2023-06-02 12:18:16.613292368 +0300
+@@ -118,9 +118,7 @@
+     }
+ 
+     // wait for sound to progress to lightning strike
+-    if (_atiThunderSounds[ m_iSoundPlaying].ti_fThunderStrikeDelay>0.0f) {
+     autowait( _atiThunderSounds[ m_iSoundPlaying].ti_fThunderStrikeDelay);
+-    }
+ 
+     // remember current time as lightning start time
+     TIME tmNow = _pTimer->CurrentTick();
 diff -aurN a/Entities/Player.es b/Entities/Player.es
 --- a/Entities/Player.es	2022-12-20 18:00:19.000000000 +0300
-+++ b/Entities/Player.es	2023-01-05 19:38:23.813960017 +0300
++++ b/Entities/Player.es	2023-06-02 12:18:16.613292368 +0300
 @@ -35,16 +35,16 @@
  #include "Entities/WorldSettingsController.h"
  
@@ -2115,7 +2908,7 @@ diff -aurN a/Entities/Player.es b/Entities/Player.es
  // from game
 diff -aurN a/Entities/Projectile.es b/Entities/Projectile.es
 --- a/Entities/Projectile.es	2022-12-20 18:00:19.000000000 +0300
-+++ b/Entities/Projectile.es	2023-01-05 19:38:23.817293358 +0300
++++ b/Entities/Projectile.es	2023-06-02 12:18:16.616625740 +0300
 @@ -1383,7 +1383,7 @@
    penSpray->Initialize( eSpawnSpray);
  
@@ -2145,7 +2938,7 @@ diff -aurN a/Entities/Projectile.es b/Entities/Projectile.es
      FLOAT fPitch = 10.0f+FRnd()*40.0f;
 diff -aurN a/Entities/WorldBase.es b/Entities/WorldBase.es
 --- a/Entities/WorldBase.es	2022-12-20 18:00:19.000000000 +0300
-+++ b/Entities/WorldBase.es	2023-01-05 19:38:23.817293358 +0300
++++ b/Entities/WorldBase.es	2023-06-02 12:18:16.616625740 +0300
 @@ -933,14 +933,14 @@
      ulFirst = offsetof(CWorldBase, m_penGradient0);
      ulLast  = offsetof(CWorldBase, m_penGradient19);
@@ -2192,7 +2985,7 @@ diff -aurN a/Entities/WorldBase.es b/Entities/WorldBase.es
  
 diff -aurN a/EntitiesMP/Common/HUD.cpp b/EntitiesMP/Common/HUD.cpp
 --- a/EntitiesMP/Common/HUD.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/EntitiesMP/Common/HUD.cpp	2023-01-05 19:38:23.820626699 +0300
++++ b/EntitiesMP/Common/HUD.cpp	2023-06-02 12:18:16.619959110 +0300
 @@ -32,8 +32,8 @@
  #define TOP_HEALTH 100
  
@@ -2206,7 +2999,7 @@ diff -aurN a/EntitiesMP/Common/HUD.cpp b/EntitiesMP/Common/HUD.cpp
  extern __declspec(dllimport) FLOAT _fFragScorerHeightAdjuster;
 diff -aurN a/EntitiesMP/Common/Particles.cpp b/EntitiesMP/Common/Particles.cpp
 --- a/EntitiesMP/Common/Particles.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/EntitiesMP/Common/Particles.cpp	2023-01-05 19:38:23.820626699 +0300
++++ b/EntitiesMP/Common/Particles.cpp	2023-06-02 12:18:16.619959110 +0300
 @@ -536,7 +536,7 @@
        // delete the cache for this EPH and this DrawPort
        INDEX iDrawPort = Particle_GetDrawPortID();
@@ -2236,7 +3029,7 @@ diff -aurN a/EntitiesMP/Common/Particles.cpp b/EntitiesMP/Common/Particles.cpp
    static CStaticStackArray<CGrowth> acgDraw;
 diff -aurN a/EntitiesMP/DestroyableArchitecture.es b/EntitiesMP/DestroyableArchitecture.es
 --- a/EntitiesMP/DestroyableArchitecture.es	2022-12-20 18:00:19.000000000 +0300
-+++ b/EntitiesMP/DestroyableArchitecture.es	2023-01-05 19:38:23.820626699 +0300
++++ b/EntitiesMP/DestroyableArchitecture.es	2023-06-02 12:18:16.619959110 +0300
 @@ -238,7 +238,7 @@
  
    void DestroyObelisk()
@@ -2257,7 +3050,7 @@ diff -aurN a/EntitiesMP/DestroyableArchitecture.es b/EntitiesMP/DestroyableArchi
        FLOAT3D vOffset = FLOAT3D( di.vOffset[0], di.vOffset[1], di.vOffset[2])*m_fStretch;
 diff -aurN a/EntitiesMP/Player.es b/EntitiesMP/Player.es
 --- a/EntitiesMP/Player.es	2022-12-20 18:00:19.000000000 +0300
-+++ b/EntitiesMP/Player.es	2023-01-05 19:38:23.827293382 +0300
++++ b/EntitiesMP/Player.es	2023-06-02 12:18:16.623292482 +0300
 @@ -57,16 +57,16 @@
  #include "EntitiesMP/HudPicHolder.h"
  
@@ -2291,7 +3084,7 @@ diff -aurN a/EntitiesMP/Player.es b/EntitiesMP/Player.es
          if ((m_tmInvisibility-tmNow)<1.28f) {
 diff -aurN a/EntitiesMP/Projectile.es b/EntitiesMP/Projectile.es
 --- a/EntitiesMP/Projectile.es	2022-12-20 18:00:19.000000000 +0300
-+++ b/EntitiesMP/Projectile.es	2023-01-05 19:38:23.827293382 +0300
++++ b/EntitiesMP/Projectile.es	2023-06-02 12:18:16.623292482 +0300
 @@ -1654,7 +1654,7 @@
    penSpray->Initialize( eSpawnSpray);
  
@@ -2321,7 +3114,7 @@ diff -aurN a/EntitiesMP/Projectile.es b/EntitiesMP/Projectile.es
      FLOAT fPitch = 10.0f+FRnd()*40.0f;
 diff -aurN a/EntitiesMP/Summoner.es b/EntitiesMP/Summoner.es
 --- a/EntitiesMP/Summoner.es	2022-12-20 18:00:19.000000000 +0300
-+++ b/EntitiesMP/Summoner.es	2023-01-05 19:38:23.827293382 +0300
++++ b/EntitiesMP/Summoner.es	2023-06-02 12:18:16.623292482 +0300
 @@ -207,8 +207,8 @@
   
    BOOL IsTargetValid(SLONG slPropertyOffset, CEntity *penTarget)
@@ -2335,7 +3128,7 @@ diff -aurN a/EntitiesMP/Summoner.es b/EntitiesMP/Summoner.es
          if (((CEnemyBase &)*penTarget).m_bTemplate) {
 diff -aurN a/EntitiesMP/WorldBase.es b/EntitiesMP/WorldBase.es
 --- a/EntitiesMP/WorldBase.es	2022-12-20 18:00:19.000000000 +0300
-+++ b/EntitiesMP/WorldBase.es	2023-01-05 19:38:23.830626723 +0300
++++ b/EntitiesMP/WorldBase.es	2023-06-02 12:18:16.626625852 +0300
 @@ -1050,14 +1050,14 @@
      ulFirst = _offsetof(CWorldBase, m_penGradient0);
      ulLast  = _offsetof(CWorldBase, m_penGradient19);
@@ -2382,7 +3175,7 @@ diff -aurN a/EntitiesMP/WorldBase.es b/EntitiesMP/WorldBase.es
  
 diff -aurN a/GameMP/Console.cpp b/GameMP/Console.cpp
 --- a/GameMP/Console.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/GameMP/Console.cpp	2023-01-05 19:38:23.847293428 +0300
++++ b/GameMP/Console.cpp	2023-06-02 12:18:16.639959336 +0300
 @@ -553,7 +553,7 @@
    case VK_BACK:    Key_Backspace(bShift, FALSE);  break;
    case VK_DELETE:  Key_Backspace(bShift, TRUE);   break;
@@ -2394,7 +3187,7 @@ diff -aurN a/GameMP/Console.cpp b/GameMP/Console.cpp
    }
 diff -aurN a/GameMP/Game.cpp b/GameMP/Game.cpp
 --- a/GameMP/Game.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/GameMP/Game.cpp	2023-01-05 19:38:23.847293428 +0300
++++ b/GameMP/Game.cpp	2023-06-02 12:18:16.639959336 +0300
 @@ -1058,9 +1058,9 @@
    _pShell->Execute(CTString("include \"")+fnmStartupScript+"\";");
  
@@ -2417,9 +3210,45 @@ diff -aurN a/GameMP/Game.cpp b/GameMP/Game.cpp
  #else
        CTSingleLock csTimer(&_pTimer->tm_csHooks, TRUE);
  #endif
+diff -aurN a/SeriousSam/CmdLine.cpp b/SeriousSam/CmdLine.cpp
+--- a/SeriousSam/CmdLine.cpp	2022-12-20 18:00:19.000000000 +0300
++++ b/SeriousSam/CmdLine.cpp	2023-06-02 12:18:16.713293497 +0300
+@@ -118,6 +118,10 @@
+       }
+     } else if (strWord=="+cdpath") {
+       _fnmCDPath = GetNextParam();
++#ifdef PLATFORM_UNIX
++    } else if (strWord=="+portable") {
++      _bPortableVersion = TRUE; // portable version (all user files stored in game dir)
++#endif
+     } else if (strWord=="+password") {
+       cmd_strPassword = GetNextParam();
+     } else if (strWord=="+connect") {
+diff -aurN a/SeriousSam/MainWindow.cpp b/SeriousSam/MainWindow.cpp
+--- a/SeriousSam/MainWindow.cpp	2022-12-20 18:00:19.000000000 +0300
++++ b/SeriousSam/MainWindow.cpp	2023-06-02 12:18:16.713293497 +0300
+@@ -303,15 +303,15 @@
+   SDL_snprintf( achWindowTitle, sizeof (achWindowTitle), TRANSV("Serious Sam (FullScreen %dx%d)"), pixSizeI, pixSizeJ);
+ #ifdef SE1_VULKAN
+   if( sam_iGfxAPI == 1) {
+-    _hwndMain = SDL_CreateWindow((const char*)strWindow1251ToUtf8(achWindowTitle), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, pixSizeI, pixSizeJ, SDL_WINDOW_VULKAN | SDL_WINDOW_FULLSCREEN);
++    _hwndMain = SDL_CreateWindow((const char*)strWindow1251ToUtf8(achWindowTitle), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, pixSizeI, pixSizeJ, SDL_WINDOW_VULKAN | SDL_WINDOW_FULLSCREEN | SDL_WINDOW_BORDERLESS);
+     if( _hwndMain!=NULL) {
+       CPrintF("SDL: CreateWindow with flag (SDL_WINDOW_VULKAN) Done.\n");
+     }
+   } else {
+-    _hwndMain = SDL_CreateWindow((const char*)strWindow1251ToUtf8(achWindowTitle), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, pixSizeI, pixSizeJ, SDL_WINDOW_OPENGL | SDL_WINDOW_FULLSCREEN);
++    _hwndMain = SDL_CreateWindow((const char*)strWindow1251ToUtf8(achWindowTitle), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, pixSizeI, pixSizeJ, SDL_WINDOW_OPENGL | SDL_WINDOW_FULLSCREEN | SDL_WINDOW_BORDERLESS);
+   }
+ #else
+-    _hwndMain = SDL_CreateWindow((const char*)strWindow1251ToUtf8(achWindowTitle), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, pixSizeI, pixSizeJ, SDL_WINDOW_OPENGL | SDL_WINDOW_FULLSCREEN);
++    _hwndMain = SDL_CreateWindow((const char*)strWindow1251ToUtf8(achWindowTitle), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, pixSizeI, pixSizeJ, SDL_WINDOW_OPENGL | SDL_WINDOW_FULLSCREEN | SDL_WINDOW_BORDERLESS);
+ #endif // SE1_VULKAN
+   if( _hwndMain==NULL) FatalError(TRANS("Cannot open main window!"));
+   SE_UpdateWindowHandle( _hwndMain);
 diff -aurN a/SeriousSam/Menu.cpp b/SeriousSam/Menu.cpp
 --- a/SeriousSam/Menu.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/SeriousSam/Menu.cpp	2023-01-05 19:38:23.940626978 +0300
++++ b/SeriousSam/Menu.cpp	2023-06-02 12:18:16.713293497 +0300
 @@ -28,14 +28,14 @@
  extern CTextureObject *_ptoLogoODI;
  extern CTextureObject *_ptoLogoEAX;
@@ -2504,7 +3333,7 @@ diff -aurN a/SeriousSam/Menu.cpp b/SeriousSam/Menu.cpp
      mgServerColumn[i].mg_bfsFontSize = BFS_SMALL;
 diff -aurN a/SeriousSam/MenuGadgets.cpp b/SeriousSam/MenuGadgets.cpp
 --- a/SeriousSam/MenuGadgets.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/SeriousSam/MenuGadgets.cpp	2023-01-05 19:38:23.940626978 +0300
++++ b/SeriousSam/MenuGadgets.cpp	2023-06-02 12:18:16.716626869 +0300
 @@ -18,9 +18,9 @@
  //##############################################################################################################################3
  //##############################################################################################################################3
@@ -2555,7 +3384,7 @@ diff -aurN a/SeriousSam/MenuGadgets.cpp b/SeriousSam/MenuGadgets.cpp
    pdp->DrawLine(apixSeparatorI[0], pixTopJ, apixSeparatorI[8], pixTopJ, col|CT_OPAQUE);
 diff -aurN a/SeriousSam/MenuPrinting.cpp b/SeriousSam/MenuPrinting.cpp
 --- a/SeriousSam/MenuPrinting.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/SeriousSam/MenuPrinting.cpp	2023-01-05 19:38:23.940626978 +0300
++++ b/SeriousSam/MenuPrinting.cpp	2023-06-02 12:18:16.716626869 +0300
 @@ -4,15 +4,15 @@
  
  #include "MenuPrinting.h"
@@ -2583,7 +3412,7 @@ diff -aurN a/SeriousSam/MenuPrinting.cpp b/SeriousSam/MenuPrinting.cpp
  #define _scaler_ 3.5
 diff -aurN a/SeriousSam/SeriousSam.cpp b/SeriousSam/SeriousSam.cpp
 --- a/SeriousSam/SeriousSam.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/SeriousSam/SeriousSam.cpp	2023-01-05 19:38:23.940626978 +0300
++++ b/SeriousSam/SeriousSam.cpp	2023-06-02 12:18:16.716626869 +0300
 @@ -86,43 +86,43 @@
  extern FLOAT _fNoSizeJ;
  
@@ -2710,6 +3539,15 @@ diff -aurN a/SeriousSam/SeriousSam.cpp b/SeriousSam/SeriousSam.cpp
  
  #ifdef FIRST_ENCOUNTER  // First Encounter
  CTString sam_strVersion = "1.10";
+@@ -356,7 +356,7 @@
+ void LimitFrameRate(void)
+ {
+   // do not limit FPS on the Pandora, it's not powerfull enough and doesn't "iconise" games either
+-  #if !defined(PLATFORM_PANDORA) && !defined(PLATFORM_PYRA) && !defined(PLATFORM_RPI4) && !defined(__e2k__)
++  #if !PLATFORM_NOT_X86
+   // measure passed time for each loop
+   static CTimerValue tvLast(-1.0f);
+   CTimerValue tvNow   = _pTimer->GetHighPrecisionTimer();
 @@ -1401,7 +1401,7 @@
        }
  
@@ -2754,7 +3592,7 @@ diff -aurN a/SeriousSam/SeriousSam.cpp b/SeriousSam/SeriousSam.cpp
                           "Serious Sam",
 diff -aurN a/SeriousSam/StdH.h b/SeriousSam/StdH.h
 --- a/SeriousSam/StdH.h	2022-12-20 18:00:19.000000000 +0300
-+++ b/SeriousSam/StdH.h	2023-01-05 19:38:23.940626978 +0300
++++ b/SeriousSam/StdH.h	2023-06-02 12:18:16.716626869 +0300
 @@ -31,6 +31,12 @@
  #define _offsetof offsetof
  #endif
@@ -2768,204 +3606,3 @@ diff -aurN a/SeriousSam/StdH.h b/SeriousSam/StdH.h
  #ifdef PLATFORM_UNIX
  #define DECL_DLL 
  #endif
-diff -aurN a/WorldEditor/Browser.cpp b/WorldEditor/Browser.cpp
---- a/WorldEditor/Browser.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/WorldEditor/Browser.cpp	2023-01-05 19:38:23.947293660 +0300
-@@ -162,8 +162,8 @@
-   InsertedDir = m_TreeCtrl.InsertItem( 0, L"", 0, 0, TVIS_SELECTED, TVIF_STATE, 0,
-                                        hParent, TVI_SORT );
- 
--  pOneDirectory->vtn_Handle = (ULONG) InsertedDir;
--  m_TreeCtrl.SetItemData( InsertedDir, (ULONG)(pOneDirectory));
-+  pOneDirectory->vtn_Handle = (HTREEITEM) InsertedDir;
-+  m_TreeCtrl.SetItemData( InsertedDir, (DWORD_PTR)(pOneDirectory));
-   m_TreeCtrl.SetItemText( InsertedDir, CString(pOneDirectory->vtn_strName));
-   m_TreeCtrl.SetItemImage( InsertedDir, pOneDirectory->vtn_itIconType,
-                            pOneDirectory->vtn_itIconType + NO_OF_ICONS);
-@@ -801,15 +801,18 @@
- 
- CVirtualTreeNode *CBrowser::GetSelectedDirectory(void)
- {
--  if( m_TreeCtrl.GetCount() != 0)
--  {
--    HTREEITEM pSelectedItem = m_TreeCtrl.GetSelectedItem();
--    if( pSelectedItem!=NULL)
--    {
--      return (CVirtualTreeNode *)m_TreeCtrl.GetItemData( pSelectedItem);
--    }
--  }
--  return NULL;
-+	if (m_TreeCtrl.GetCount() != 0)
-+	{
-+		HTREEITEM pSelectedItem = m_TreeCtrl.GetSelectedItem();
-+		if (pSelectedItem != NULL)
-+		{
-+			DWORD_PTR hItem = m_TreeCtrl.GetItemData(pSelectedItem);
-+			CVirtualTreeNode * cthItem = reinterpret_cast<CVirtualTreeNode *>(hItem);
-+			return cthItem;
-+			//return (CVirtualTreeNode *)m_TreeCtrl.GetItemData(pSelectedItem);
-+		}
-+	}
-+	return NULL;
- }
- 
- void CBrowser::OpenSelectedDirectory(void)
-diff -aurN a/WorldEditor/CSGDesitnationCombo.cpp b/WorldEditor/CSGDesitnationCombo.cpp
---- a/WorldEditor/CSGDesitnationCombo.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/WorldEditor/CSGDesitnationCombo.cpp	2023-01-05 19:38:23.947293660 +0300
-@@ -95,7 +95,7 @@
-             // add it to CSG destination combo
-             INDEX iComboEntry = AddString( CString(strEntityName));
-             // set item's data as ptr to current entity
--            SetItemData( iComboEntry, (ULONG)(&*iten));
-+            SetItemData( iComboEntry, (DWORD_PTR)(&*iten));
-             // try to select previously selected combo entry
-             if( strEntityName == m_strLastSelectedName)
-             {
-diff -aurN a/WorldEditor/DlgLinkTree.cpp b/WorldEditor/DlgLinkTree.cpp
---- a/WorldEditor/DlgLinkTree.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/WorldEditor/DlgLinkTree.cpp	2023-01-05 19:38:23.947293660 +0300
-@@ -182,7 +182,7 @@
-   HTREEITEM InsertedEntity;
-   InsertedEntity = m_ctrTree.InsertItem( 0, L"", 0, 0,
-     TVIS_SELECTED, TVIF_STATE, 0, hParent, 0);
--  m_ctrTree.SetItemData( InsertedEntity, (ULONG)(pen));
-+  m_ctrTree.SetItemData( InsertedEntity, (DWORD_PTR)(pen));
-   CTString strText="";
-   if( m_bClass)
-   {
-diff -aurN a/WorldEditor/DlgPgPrimitive.cpp b/WorldEditor/DlgPgPrimitive.cpp
---- a/WorldEditor/DlgPgPrimitive.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/WorldEditor/DlgPgPrimitive.cpp	2023-01-05 19:38:23.947293660 +0300
-@@ -614,7 +614,7 @@
- 
-     INDEX iAddedAs = m_comboPrimitiveHistory.AddString(CString(
-       strNo+strDescription+strPosition+strTriangularisation));
--    m_comboPrimitiveHistory.SetItemData( iAddedAs, (ULONG) &itPrim->pihb_vfpPrimitive);
-+    m_comboPrimitiveHistory.SetItemData( iAddedAs, (DWORD_PTR) &itPrim->pihb_vfpPrimitive);
-     iCt++;
-   }
- 	return TRUE;
-diff -aurN a/WorldEditor/DlgPgShadow.cpp b/WorldEditor/DlgPgShadow.cpp
---- a/WorldEditor/DlgPgShadow.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/WorldEditor/DlgPgShadow.cpp	2023-01-05 19:38:23.947293660 +0300
-@@ -316,7 +316,7 @@
-     strIlluminationName = pDoc->m_woWorld.wo_aitIlluminationTypes[iIllumination].it_strName;
-     if(strIlluminationName == "") break;
-     INDEX iAddedAs = m_ComboIllumination.AddString( CString(strIlluminationName));
--    m_ComboIllumination.SetItemData( iAddedAs, (ULONG) iIllumination);
-+    m_ComboIllumination.SetItemData( iAddedAs, (DWORD_PTR) iIllumination);
-   }
-   for(INDEX iBlend=0; iBlend<256; iBlend++)
-   {
-diff -aurN a/WorldEditor/DlgSelectByName.cpp b/WorldEditor/DlgSelectByName.cpp
---- a/WorldEditor/DlgSelectByName.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/WorldEditor/DlgSelectByName.cpp	2023-01-05 19:38:23.947293660 +0300
-@@ -108,7 +108,7 @@
-       // add it to list box
-       INDEX iListEntry = m_ListBox.AddString( CString(strEntityName));
-       // set item's data as ptr to current entity
--      m_ListBox.SetItemData( iListEntry, (ULONG)(&*iten));
-+      m_ListBox.SetItemData( iListEntry, (DWORD_PTR)(&*iten));
-       // if current entity is selected
-       if( iten->IsSelected( ENF_SELECTED))
-       {
-diff -aurN a/WorldEditor/PrimitiveHistoryCombo.cpp b/WorldEditor/PrimitiveHistoryCombo.cpp
---- a/WorldEditor/PrimitiveHistoryCombo.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/WorldEditor/PrimitiveHistoryCombo.cpp	2023-01-05 19:38:23.950627001 +0300
-@@ -66,7 +66,7 @@
-   }
-   
-   CValuesForPrimitive *pVFP = (CValuesForPrimitive *) GetItemData( iItem);
--  if( (ULONG) pVFP == CB_ERR) return;
-+  if( (ULONG_PTR) pVFP == CB_ERR) return;
- 
-   CDC *pDC = CDC::FromHandle( lpDrawItemStruct->hDC);
-   RECT rectItem = lpDrawItemStruct->rcItem;
-diff -aurN a/WorldEditor/PropertyComboBar.cpp b/WorldEditor/PropertyComboBar.cpp
---- a/WorldEditor/PropertyComboBar.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/WorldEditor/PropertyComboBar.cpp	2023-01-05 19:38:23.950627001 +0300
-@@ -1127,7 +1127,7 @@
-                   iAddedAs = m_EditEnumComboBox.AddString( L"Unnamed");
-                 }
-                 // set entity ptr as item's data
--                m_EditEnumComboBox.SetItemData( iAddedAs, (ULONG) &*iten);
-+                m_EditEnumComboBox.SetItemData( iAddedAs, (DWORD_PTR) &*iten);
-               }
-             }}
- 
-@@ -1213,7 +1213,7 @@
-                 // add animation to combo
-                 INDEX iAddedAs = m_EditEnumComboBox.AddString( CString(aiInfo.ai_AnimName));
-                 // set animation number as item's data
--                m_EditEnumComboBox.SetItemData( iAddedAs, (ULONG) iAnimation);
-+                m_EditEnumComboBox.SetItemData( iAddedAs, (DWORD_PTR) iAnimation);
-               }
-             }
- 
-@@ -1282,7 +1282,7 @@
-               // add illumination type to combo
-               INDEX iAddedAs = m_EditEnumComboBox.AddString( CString(strIlluminationName));
-               // set illumination type number as item's data
--              m_EditEnumComboBox.SetItemData( iAddedAs, (ULONG) iIllumination);
-+              m_EditEnumComboBox.SetItemData( iAddedAs, (DWORD_PTR) iIllumination);
-             }
- 
-             // lock selection's dynamic container
-diff -aurN a/WorldEditor/PropertyComboBox.cpp b/WorldEditor/PropertyComboBox.cpp
---- a/WorldEditor/PropertyComboBox.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/WorldEditor/PropertyComboBox.cpp	2023-01-05 19:38:23.950627001 +0300
-@@ -263,7 +263,7 @@
-           // add property name and shortcut key
-           INDEX iAddedAs = AddString( CString(itProp->pid_strName + achrShortcutKey));
-           // set ptr to property ID object
--          SetItemData( iAddedAs, (ULONG) &*itProp);
-+          SetItemData( iAddedAs, (DWORD_PTR) &*itProp);
-           // enable combo
-           EnableWindow();
-         }
-diff -aurN a/WorldEditor/TerrainInterface.cpp b/WorldEditor/TerrainInterface.cpp
---- a/WorldEditor/TerrainInterface.cpp	2022-12-20 18:00:19.000000000 +0300
-+++ b/WorldEditor/TerrainInterface.cpp	2023-01-05 19:38:23.950627001 +0300
-@@ -1352,9 +1352,9 @@
-     CTerrainLayer *ptlLayer=GetLayer(iLayer);
-     if(ptlLayer!=NULL)
-     {
--      BOOL bOldValue=*(BOOL*)((UBYTE*)ptlLayer+(ULONG)ptib->tib_pfData1);
-+      BOOL bOldValue=*(BOOL*)((UBYTE*)ptlLayer+(ULONG_PTR)ptib->tib_pfData1);
-       bOldValue=!bOldValue;
--      *(BOOL*)((UBYTE*)ptlLayer+(ULONG)ptib->tib_pfData1)=bOldValue;
-+      *(BOOL*)((UBYTE*)ptlLayer+(ULONG_PTR)ptib->tib_pfData1)=bOldValue;
-     }
-   }
- }
-@@ -1374,7 +1374,7 @@
-     CTerrainLayer *ptlLayer=GetLayer(iLayer);
-     if(ptlLayer!=NULL)
-     {
--      FLOAT *pfNormalized=(FLOAT *)((UBYTE*)ptlLayer+(ULONG)ptib->tib_pfData1);
-+      FLOAT *pfNormalized=(FLOAT *)((UBYTE*)ptlLayer+(ULONG_PTR)ptib->tib_pfData1);
-       FLOAT fValue=*pfNormalized;
-       strInfo.PrintF("%s: %d%%", ptib->tib_strToolTip, INDEX(floor(fValue*100.0f+0.5f)));
-       return strInfo;
-@@ -1391,7 +1391,7 @@
-   CTerrainLayer *ptlLayer=GetLayer(iLayer);
-   if(ptlLayer==NULL) return;
-   
--  FLOAT *pfNormalized=(FLOAT *)((UBYTE*)ptlLayer+(ULONG)ptib->tib_pfData1);
-+  FLOAT *pfNormalized=(FLOAT *)((UBYTE*)ptlLayer+(ULONG_PTR)ptib->tib_pfData1);
-   FLOAT fOldValue=*pfNormalized;
-   FLOAT fAddX=ptib->tib_fDataDelta*fdx;
-   FLOAT fNewValue=Clamp( fOldValue+fAddX, 0.0f, 1.0f);
-diff -aurN a/WorldEditor/VirtualTreeNode.h b/WorldEditor/VirtualTreeNode.h
---- a/WorldEditor/VirtualTreeNode.h	2022-12-20 18:00:19.000000000 +0300
-+++ b/WorldEditor/VirtualTreeNode.h	2023-01-05 19:38:23.950627001 +0300
-@@ -40,7 +40,7 @@
-   CListNode vtn_lnInDirectory;
-   CListHead vtn_lhChildren;           // valid if this is a directory
-   CVirtualTreeNode *vnt_pvtnParent;   // NULL if this is root
--  ULONG vtn_Handle;                   // internaly use ULONG, later cast to HTREEITEM
-+  HTREEITEM vtn_Handle;                   // internaly use ULONG, later cast to HTREEITEM
-   INDEX vtn_itIconType;               // INDEX of representing icon in list of icons
-   enum BrowsingMode vtn_bmBrowsingMode;// how to display items - as icons, text, ...
-   BOOL vtn_bSelected;                 // (if item) is this item curently selected

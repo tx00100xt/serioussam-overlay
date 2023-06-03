@@ -64,9 +64,8 @@ usr/lib64/libEngineMP.so
 "
 
 PATCHES=(
+	"${FILESDIR}/samtse-vk-1.10.4-to-1.10.5-pre.patch"
 	"${FILESDIR}/rparh_security_vk_1.10.4.patch"
-	"${FILESDIR}/tse-vk-last-update.patch"
-	"${FILESDIR}/fix_sdl2_vk_fullscreen_on_gnome44.patch"
 )
 
 src_configure() {
