@@ -62,7 +62,7 @@ usr/bin/${GN}-ded
 "
 
 PATCHES=(
-	"${FILESDIR}/rparh_security.patch"
+	"${FILESDIR}/rparh_security-9999.patch"
 )
 
 src_configure() {

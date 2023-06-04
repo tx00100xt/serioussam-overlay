@@ -60,7 +60,7 @@ usr/lib64/libEngineMP.so
 "
 
 PATCHES=(
-	"${FILESDIR}/rparh_security.patch"
+	"${FILESDIR}/rparh_security-9999.patch"
 )
 
 src_configure() {

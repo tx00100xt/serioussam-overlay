@@ -65,7 +65,7 @@ usr/bin/${GN}-ded
 "
 
 PATCHES=(
-	"${FILESDIR}/rparh_security_vk_1.10.4.patch"
+	"${FILESDIR}/rparh_security_vk_9999.patch"
 )
 
 src_configure() {
