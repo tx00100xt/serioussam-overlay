@@ -5,18 +5,18 @@ EAPI=7
 
 inherit cmake
 
-MY_PN="SamTFE"
+MY_PN="SamTSE"
 # Game name
-GN="serioussam"
+GN="serioussamse"
 
-DESCRIPTION="Serious Sam Classic The First Encounter XPLUS Modification"
+DESCRIPTION="Serious Sam Classic The Second Encounter XPLUS Modification"
 HOMEPAGE="https://github.com/tx00100xt/SeriousSamClassic"
 SRC_URI="https://github.com/tx00100xt/SeriousSamClassic/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz
-	https://github.com/tx00100xt/serioussam-mods/raw/main/SamTFE-XPLUS/SamTFE-XPLUS.tar.xz.partaa
-	https://github.com/tx00100xt/serioussam-mods/raw/main/SamTFE-XPLUS/SamTFE-XPLUS.tar.xz.partab
-	https://github.com/tx00100xt/serioussam-mods/raw/main/SamTFE-XPLUS/SamTFE-XPLUS.tar.xz.partac"
+	https://github.com/tx00100xt/serioussam-mods/raw/main/SamTSE-XPLUS/SamTSE-XPLUS.tar.xz.partaa
+	https://github.com/tx00100xt/serioussam-mods/raw/main/SamTSE-XPLUS/SamTSE-XPLUS.tar.xz.partab
+	https://github.com/tx00100xt/serioussam-mods/raw/main/SamTSE-XPLUS/SamTSE-XPLUS.tar.xz.partac"
 
-XPLUS_ARC="SamTFE-XPLUS.tar.xz"
+XPLUS_ARC="SamTSE-XPLUS.tar.xz"
 
 LICENSE="GPL-2"
 SLOT="0"
@@ -25,7 +25,7 @@ RESTRICT="bindist mirror"
 IUSE=""
 
 RDEPEND="
-    || ( games-fps/serioussam-tfe-vk games-fps/serioussam-tfe )
+    || ( games-fps/serioussam-tse-vk games-fps/serioussam-tse )
 	media-libs/libsdl2[alsa,video,joystick,opengl]
 	media-libs/libvorbis
     sys-libs/zlib
@@ -39,44 +39,40 @@ S="${WORKDIR}/SeriousSamClassic-${PV}/${MY_PN}/Sources"
 MY_CONTENT="${WORKDIR}/SeriousSamClassic-${PV}/${MY_PN}"
 
 QA_TEXTRELS="
-usr/lib/${GN}/Mods/XPLUS/Bin/libEntities.so
-usr/lib/${GN}/XPLUS/Bin/libGame.so
-usr/lib64/${GN}/Mods/XPLUS/Bin/libEntities.so
-usr/lib64/${GN}/XPLUS/Bin/libGame.so
+usr/lib/${GN}/Mods/XPLUS/Bin/libEntitiesMP.so
+usr/lib/${GN}/XPLUS/Bin/libGameMP.so
+usr/lib64/${GN}/Mods/XPLUS/Bin/libEntitiesMP.so
+usr/lib64/${GN}/XPLUS/Bin/libGameMP.so
 "
 
 QA_FLAGS_IGNORED="
-usr/lib/${GN}/Mods/XPLUS/Bin/libEntities.so
-usr/lib/${GN}/XPLUS/Bin/libGame.so
-usr/lib64/${GN}/Mods/XPLUS/Bin/libEntities.so
-usr/lib64/${GN}/XPLUS/Bin/libGame.so
+usr/lib/${GN}/Mods/XPLUS/Bin/libEntitiesMP.so
+usr/lib/${GN}/XPLUS/Bin/libGameMP.so
+usr/lib64/${GN}/Mods/XPLUS/Bin/libEntitiesMP.so
+usr/lib64/${GN}/XPLUS/Bin/libGameMP.so
 "
 
 PATCHES=(
-	"${FILESDIR}/rparh_security.patch"
-	"${FILESDIR}/fixed_broken_timer.patch"
-	"${FILESDIR}/critical_section_multitread.patch"
-	"${FILESDIR}/fix-thunder.patch"
+	"${FILESDIR}/rparh_security-9999.patch"
 )
-
 
 
 src_configure() {
     einfo "Choosing the player's xplus weapon..."
-    rm -f "${S}"/Sources/Entities/PlayerWeapons.es || die "Failed to removed PlayerWeapons.es"
-    mv "${S}"/Entities/PlayerWeaponsHD.es "${S}"/Entities/PlayerWeapons.es || die "Failed to moved PlayerWeapons.es"
+	rm -f "${MY_CONTENT}/Sources/EntitiesMP/PlayerWeapons.es" || die "Failed to removed PlayerWeapons.es"
+    mv "${MY_CONTENT}/Sources/EntitiesMP/PlayerWeaponsHD.es" "${MY_CONTENT}/Sources/EntitiesMP/PlayerWeapons.es" || die "Failed to moved PlayerWeapons.es"
 
     einfo "Setting build type Release..."
     CMAKE_BUILD_TYPE="Release"
     if use arm64
     then
         local mycmakeargs=(
-            -DTFE=TRUE
+            -DTFE=FALSE
             -DRPI4=TRUE
         )
     else
         local mycmakeargs=(
-            -DTFE=TRUE
+            -DTFE=FALSE
         )
     fi
     cmake_src_configure
@@ -96,13 +92,13 @@ src_install() {
     # moving libs
  	if use x86; then
         mkdir "${D}/usr/lib/${GN}/Mods/XPLUS"
-        mv "${BUILD_DIR}"/Debug/libEntities.so "${D}/usr/lib/${GN}/Mods/XPLUS" || die "Failed to moved libEntities.so"
-        mv "${BUILD_DIR}"/Debug/libGame.so "${D}/usr/lib/${GN}/Mods/XPLUS" || die "Failed to moved libGame.so"
+        mv "${BUILD_DIR}"/Debug/libEntitiesMP.so "${D}/usr/lib/${GN}/Mods/XPLUS" || die "Failed to moved libEntities.so"
+        mv "${BUILD_DIR}"/Debug/libGameMP.so "${D}/usr/lib/${GN}/Mods/XPLUS" || die "Failed to moved libGame.so"
         dosym "/usr/lib/${GN}/libamp11lib.so" "/usr/lib/${GN}/Mods/XPLUS/libamp11lib.so"
     else
     	mkdir "${D}/usr/lib64/${GN}/Mods/XPLUS"
-        mv "${BUILD_DIR}"/Debug/libEntities.so "${D}/usr/lib64/${GN}/Mods/XPLUS" || die "Failed to moved libEntities.so"
-        mv "${BUILD_DIR}"/Debug/libGame.so "${D}/usr/lib64/${GN}/Mods/XPLUS" || die "Failed to moved libGame.so"
+        mv "${BUILD_DIR}"/Debug/libEntitiesMP.so "${D}/usr/lib64/${GN}/Mods/XPLUS" || die "Failed to moved libEntities.so"
+        mv "${BUILD_DIR}"/Debug/libGameMP.so "${D}/usr/lib64/${GN}/Mods/XPLUS" || die "Failed to moved libGame.so"
         dosym "/usr/lib64/${GN}/libamp11lib.so" "/usr/lib64/${GN}/Mods/XPLUS/libamp11lib.so"
     fi
 
@@ -124,7 +120,7 @@ src_install() {
 pkg_postinst() {
 	elog ""
 	elog "     *************************************************************"
-	elog "     Serious Sam The First Encounter XPLUS Modifications installed"
+	elog "     Serious Sam The Second Encounter XPLUS Modifications installed"
 	elog "     *************************************************************"
 	elog ""
     echo
