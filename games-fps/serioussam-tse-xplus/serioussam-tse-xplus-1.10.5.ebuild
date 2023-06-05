@@ -59,8 +59,7 @@ PATCHES=(
 
 src_configure() {
     einfo "Choosing the player's xplus weapon..."
-	rm -f "${MY_CONTENT}/Sources/EntitiesMP/PlayerWeapons.es" || die "Failed to removed PlayerWeapons.es"
-    mv "${MY_CONTENT}/Sources/EntitiesMP/PlayerWeaponsHD.es" "${MY_CONTENT}/Sources/EntitiesMP/PlayerWeapons.es" || die "Failed to moved PlayerWeapons.es"
+    sed -i 's/XPLUS modification" FALSE/XPLUS modification" TRUE/g' "${S}"/CMakeLists.txt || die "Failed to switch to XPLUS"
 
     einfo "Setting build type Release..."
     CMAKE_BUILD_TYPE="Release"
