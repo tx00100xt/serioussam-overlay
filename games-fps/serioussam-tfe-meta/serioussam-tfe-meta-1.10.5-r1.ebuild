@@ -28,5 +28,5 @@ RDEPEND="
 	games-fps/serioussam-tfe-xplus
 	games-fps/serioussam-tower
 	vulkan? ( =games-fps/serioussam-tfe-vk-${SSAM_BRANCH}-r1 )
-	!vulkan? ( =games-fps/serioussam-tfe-${SSAM_BRANCH}-t1 )
+	!vulkan? ( =games-fps/serioussam-tfe-${SSAM_BRANCH}-r1 )
 "
