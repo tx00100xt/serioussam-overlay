@@ -28,6 +28,6 @@ RDEPEND="
 	games-fps/serioussam-hno
 	games-fps/serioussam-st8vi
 	games-fps/serioussam-st8vipe
-	vulkan? ( =games-fps/serioussam-tse-vk-${SSAM_BRANCH} )
-	!vulkan? ( =games-fps/serioussam-tse-${SSAM_BRANCH} )
+	vulkan? ( =games-fps/serioussam-tse-vk-${SSAM_BRANCH}-r1 )
+	!vulkan? ( =games-fps/serioussam-tse-${SSAM_BRANCH}-r1 )
 "
