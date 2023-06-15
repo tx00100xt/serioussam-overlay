@@ -9,9 +9,9 @@ MY_PN="SamTSE"
 # Game name
 GN="serioussamse"
 
-DESCRIPTION="Linux port of Serious Sam Classic The Second Encounter"
-HOMEPAGE="https://github.com/tx00100xt/SeriousSamClassic"
-SRC_URI="https://github.com/tx00100xt/SeriousSamClassic/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"
+DESCRIPTION="Linux port of Serious Sam Classic The Second Encounter with Vulkan support"
+HOMEPAGE="https://github.com/tx00100xt/SeriousSamClassic-VK"
+SRC_URI="https://github.com/tx00100xt/SeriousSamClassic-VK/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"
 
 LICENSE="GPL-2"
 SLOT="0"
@@ -20,18 +20,22 @@ RESTRICT="bindist mirror"
 IUSE=""
 
 RDEPEND="
-    !games-fps/serioussam-tse-vk
+    !games-fps/serioussam-tse
 	media-libs/libsdl2[alsa,video,joystick,opengl]
 	media-libs/libvorbis
     sys-libs/zlib
 	sys-devel/flex
-    sys-devel/bison"
+    sys-devel/bison
+    dev-util/vulkan-headers
+    media-libs/vulkan-layers
+    media-libs/vulkan-loader"
+
 
 DEPEND="${RDEPEND}"
 BDEPEND="virtual/pkgconfig"
 
-S="${WORKDIR}/SeriousSamClassic-${PV}/${MY_PN}/Sources"
-MY_CONTENT="${WORKDIR}/SeriousSamClassic-${PV}/${MY_PN}"
+S="${WORKDIR}/SeriousSamClassic-VK-${PV}/${MY_PN}/Sources"
+MY_CONTENT="${WORKDIR}/SeriousSamClassic-VK-${PV}/${MY_PN}"
 
 QA_TEXTRELS="
 usr/lib/${GN}/libEntitiesMP.so
@@ -61,7 +65,8 @@ usr/lib64/libEngineMP.so
 
 PATCHES=(
 	"${FILESDIR}/0001-remove_SE1_10b_depend.patch"
-	"${FILESDIR}/rparh_security-9999.patch"
+	"${FILESDIR}/0002-Fixed_Platform_definition.patch"
+	"${FILESDIR}/rparh_security_vk_9999.patch"
 )
 
 src_configure() {
@@ -134,7 +139,7 @@ pkg_postinst() {
 	elog "     you can copy the *.gro files to the /usr/share/serioussamse directory."
 	elog "     /usr/share/serioussamse is the directory of the game Serious Sam Classic The Second Encounter"
 	elog "     ***************************************************************************************"
-	elog "     Copy all *.gro files and Help folder from the game directory to serioussamse directory."
+	elog "     Copy all *.gro files and Help folder from the game directory to /serioussamse directory."
 	elog "     At the current time the files are:"
 	elog "      - Help (folder)"
 	elog "      - SE1_00.gro"

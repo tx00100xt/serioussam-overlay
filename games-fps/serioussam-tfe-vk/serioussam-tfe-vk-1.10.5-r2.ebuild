@@ -65,6 +65,8 @@ usr/bin/${GN}-ded
 "
 
 PATCHES=(
+	"${FILESDIR}/0001-remove_SE1_10b_depend.patch"
+	"${FILESDIR}/0002-Fixed_Platform_definition.patch"
 	"${FILESDIR}/rparh_security_vk_9999.patch"
 )
 

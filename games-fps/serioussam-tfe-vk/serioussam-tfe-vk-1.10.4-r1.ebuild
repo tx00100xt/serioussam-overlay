@@ -66,6 +66,7 @@ usr/bin/${GN}-ded
 
 PATCHES=(
 	"${FILESDIR}/samtfe-vk-1.10.4-to-1.10.5-pre.patch"
+	"${FILESDIR}/0002-Fixed_Platform_definition.patch"
 	"${FILESDIR}/rparh_security_vk_1.10.4.patch"
 )
 
