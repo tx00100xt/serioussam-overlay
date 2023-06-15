@@ -1,5 +1,5 @@
---- a/Sources/Engine/Graphics/DrawPort.cpp	2023-06-15 15:33:34.948634151 +0300
-+++ b/Sources/Engine/Graphics/DrawPort.cpp	2023-06-15 15:35:00.308972920 +0300
+--- a/Engine/Graphics/DrawPort.cpp	2023-06-15 15:33:34.948634151 +0300
++++ b/Engine/Graphics/DrawPort.cpp	2023-06-15 15:35:00.308972920 +0300
 @@ -1168,7 +1168,8 @@
    // if the point is out or at the edge of drawport, it is not visible by default
    if( pixI<1 || pixI>dp_Width-2 || pixJ<1 || pixJ>dp_Height-2) return FALSE;
