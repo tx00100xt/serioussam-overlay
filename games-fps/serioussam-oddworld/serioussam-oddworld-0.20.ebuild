@@ -27,7 +27,7 @@ IUSE=""
 
 RDEPEND="
     || ( games-fps/serioussam-tfe-vk games-fps/serioussam-tfe )
-	media-libs/libsdl2[alsa,video,joystick,opengl]
+	media-libs/libsdl2[video,joystick,opengl]
 	media-libs/libvorbis
     sys-libs/zlib
 	sys-devel/flex
