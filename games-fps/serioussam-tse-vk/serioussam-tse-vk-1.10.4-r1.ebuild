@@ -17,7 +17,7 @@ LICENSE="GPL-2"
 SLOT="0"
 KEYWORDS="~amd64 ~x86 ~arm64"
 RESTRICT="bindist mirror"
-IUSE=""
+IUSE="alsa pipewire"
 
 RDEPEND="
     !games-fps/serioussam-tse

@@ -16,7 +16,7 @@ EGIT_REPO_URI="https://github.com/tx00100xt/SeriousSamClassic-VK.git"
 LICENSE="GPL-2"
 SLOT="0"
 RESTRICT="bindist mirror"
-IUSE=""
+IUSE="alsa pipewire"
 
 RDEPEND="
     !games-fps/serioussam-tse
