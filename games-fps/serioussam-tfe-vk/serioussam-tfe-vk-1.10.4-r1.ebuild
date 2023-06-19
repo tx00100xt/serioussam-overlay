@@ -21,7 +21,7 @@ IUSE="alsa pipewire"
 
 RDEPEND="
     !games-fps/serioussam-tfe
-	media-libs/libsdl2[video,joystick,opengl]
+	media-libs/libsdl2[video,joystick,opengl,vulkan]
 	media-libs/libvorbis
     sys-libs/zlib
 	sys-devel/flex
