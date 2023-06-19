@@ -25,11 +25,7 @@ IUSE=""
 
 RDEPEND="
     || ( games-fps/serioussam-tse-vk games-fps/serioussam-tse )
-	media-libs/libsdl2[video,joystick,opengl]
-	media-libs/libvorbis
-    sys-libs/zlib
-	sys-devel/flex
-    sys-devel/bison"
+"
 
 DEPEND="${RDEPEND}"
 BDEPEND="virtual/pkgconfig"

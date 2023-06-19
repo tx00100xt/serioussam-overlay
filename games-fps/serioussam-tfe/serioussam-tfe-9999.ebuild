@@ -25,7 +25,14 @@ RDEPEND="
     dev-vcs/git
     sys-libs/zlib
 	sys-devel/flex
-    sys-devel/bison"
+    sys-devel/bison
+	alsa? (
+		>=media-libs/libsdl-2.0.6[alsa,sound]
+	)
+	pipewire? (
+		>=media-libs/libsdl-2.0.6[pipewire,sound]
+	)
+"
 
 DEPEND="${RDEPEND}"
 BDEPEND="virtual/pkgconfig"
