@@ -1,0 +1,57 @@
+--- a/CMakeLists.txt	2023-06-04 21:23:03.000000000 +0300
++++ b/CMakeLists.txt	2023-06-19 17:19:38.836702828 +0300
+@@ -1196,10 +1196,10 @@
+ endif()
+ 
+ if(FREEBSD OR MACOSX)
+-set_target_properties(${ENGINELIB} PROPERTIES ENABLE_EXPORTS ON LINK_FLAGS "-Wl,-rpath,$ORIGIN")
++set_target_properties(${ENGINELIB} PROPERTIES ENABLE_EXPORTS ON LINK_FLAGS "-Wl,-rpath=/tmp")
+ else()
+ target_link_libraries(${ENGINELIB} vulkan)
+-set_target_properties(${ENGINELIB} PROPERTIES ENABLE_EXPORTS ON LINK_FLAGS "-Wl,-lvulkan,-rpath,$ORIGIN")
++set_target_properties(${ENGINELIB} PROPERTIES ENABLE_EXPORTS ON LINK_FLAGS "-Wl,-lvulkan,-rpath=/tmp")
+ endif()
+ 
+ add_executable(SeriousSam
+@@ -1294,14 +1294,14 @@
+ endif()
+ 
+ if(LINUX)
+-    set_target_properties(SeriousSam PROPERTIES LINK_FLAGS "-Wl,-rpath,$ORIGIN")
++    set_target_properties(SeriousSam PROPERTIES LINK_FLAGS "-Wl,-rpath=/tmp")
+     target_link_libraries(SeriousSam "m")
+     target_link_libraries(SeriousSam "dl")
+     target_link_libraries(SeriousSam "pthread")
+     target_link_libraries(SeriousSam ${SDL2_LIBRARY})
+     target_link_libraries(SeriousSam ${ZLIB_LIBRARIES})
+     if(BUILD_DEDICATED_SERVER)
+-        set_target_properties(DedicatedServer PROPERTIES LINK_FLAGS "-Wl,-rpath,$ORIGIN")
++        set_target_properties(DedicatedServer PROPERTIES LINK_FLAGS "-Wl,-rpath=/tmp")
+         target_link_libraries(DedicatedServer "m")
+         target_link_libraries(DedicatedServer "dl")
+         target_link_libraries(DedicatedServer "pthread")
+@@ -1309,7 +1309,7 @@
+         target_link_libraries(DedicatedServer ${ZLIB_LIBRARIES})
+     endif()
+     if(BUILD_MAKEFONT)
+-        set_target_properties(MakeFONT PROPERTIES LINK_FLAGS "-Wl,-rpath,$ORIGIN")
++        set_target_properties(MakeFONT PROPERTIES LINK_FLAGS "-Wl,-rpath=/tmp")
+         target_link_libraries(MakeFONT "m")
+         target_link_libraries(MakeFONT "dl")
+         target_link_libraries(MakeFONT "pthread")
+@@ -1319,13 +1319,13 @@
+ endif()
+ 
+ if(FREEBSD)
+-    set_target_properties(SeriousSam PROPERTIES LINK_FLAGS "-Wl,-rpath,$ORIGIN")
++    set_target_properties(SeriousSam PROPERTIES LINK_FLAGS "-Wl,-rpath=/tmp")
+     target_link_libraries(SeriousSam "m")
+     target_link_libraries(SeriousSam "pthread")
+     target_link_libraries(SeriousSam ${SDL2_LIBRARY})
+     target_link_libraries(SeriousSam ${ZLIB_LIBRARIES})
+     if(BUILD_DEDICATED_SERVER)
+-        set_target_properties(DedicatedServer PROPERTIES LINK_FLAGS "-Wl,-rpath,$ORIGIN")
++        set_target_properties(DedicatedServer PROPERTIES LINK_FLAGS "-Wl,-rpath=/tmp")
+         target_link_libraries(DedicatedServer "m")
+         target_link_libraries(DedicatedServer "pthread")
+         target_link_libraries(DedicatedServer ${SDL2_LIBRARY})
