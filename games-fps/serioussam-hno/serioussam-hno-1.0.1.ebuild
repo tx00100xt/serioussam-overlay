@@ -13,9 +13,11 @@ GN="serioussamse"
 DESCRIPTION="Serious Sam Classic Hero Number One Modification"
 HOMEPAGE="https://github.com/tx00100xt/SE1-TSE-HNO"
 SRC_URI="https://github.com/tx00100xt/SE1-TSE-${MY_MOD}/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz
-	https://archive.org/download/hero-number-one/HeroNumberOne.tar.xz"
+	https://archive.org/download/hero-number-one/HeroNumberOne.tar.xz
+	https://archive.org/download/hno-data-messages-eng/HNO-Data-messages-eng.tar.xz"
 
 MY_MOD_ARC="HeroNumberOne.tar.xz"
+MY_MOD_ENG_MESSAGES="HNO-Data-messages-eng.tar.xz"
 
 LICENSE="GPL-2"
 SLOT="0"
@@ -74,7 +76,11 @@ src_install() {
 
     # unpack mod content
     cat "${DISTDIR}/${MY_MOD_ARC}" > "${MY_MOD_ARC}"
+    cat "${DISTDIR}/${MY_MOD_ENG_MESSAGES}" > "${MY_MOD_ENG_MESSAGES}"
     unpack ./"${MY_MOD_ARC}"
+    unpack ./"${MY_MOD_ENG_MESSAGES}"
+    # rm -fr Mods/HNO/Data
+    # mv Data Mods/HNO/Data
     mv Mods "${D}${dir}" || die "Failed to moved mod content"
 
     # moving libs
