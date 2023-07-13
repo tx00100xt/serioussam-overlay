@@ -9,9 +9,9 @@ MY_PN="SamTFE"
 # Game name
 GN="serioussam"
 
-DESCRIPTION="Linux port of Serious Sam Classic The First Encounter with Vulkan support"
-HOMEPAGE="https://github.com/tx00100xt/SeriousSamClassic-VK"
-SRC_URI="https://github.com/tx00100xt/SeriousSamClassic-VK/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"
+DESCRIPTION="Linux port of Serious Sam Classic The First Encounter"
+HOMEPAGE="https://github.com/tx00100xt/SeriousSamClassic"
+SRC_URI="https://github.com/tx00100xt/SeriousSamClassic/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"
 
 LICENSE="GPL-2"
 SLOT="0"
@@ -20,14 +20,11 @@ RESTRICT="bindist mirror"
 IUSE="alsa pipewire"
 
 RDEPEND="
-    !games-fps/serioussam-tfe
-	media-libs/libsdl2[video,joystick,opengl,vulkan]
+    !games-fps/serioussam-tfe-vk
+	media-libs/libsdl2[video,joystick,opengl]
 	media-libs/libvorbis
     sys-libs/zlib
 	sys-devel/flex
-    sys-devel/bison
-    dev-util/vulkan-headers
-    media-libs/vulkan-layers
     sys-devel/bison
 	alsa? (
 		>=media-libs/libsdl2-2.0.6[alsa,sound]
@@ -40,8 +37,8 @@ RDEPEND="
 DEPEND="${RDEPEND}"
 BDEPEND="virtual/pkgconfig"
 
-S="${WORKDIR}/SeriousSamClassic-VK-${PV}/${MY_PN}/Sources"
-MY_CONTENT="${WORKDIR}/SeriousSamClassic-VK-${PV}/${MY_PN}"
+S="${WORKDIR}/SeriousSamClassic-${PV}/${MY_PN}/Sources"
+MY_CONTENT="${WORKDIR}/SeriousSamClassic-${PV}/${MY_PN}"
 
 QA_TEXTRELS="
 usr/lib/${GN}/libEntities.so
@@ -72,9 +69,10 @@ usr/bin/${GN}-ded
 "
 
 PATCHES=(
-	"${FILESDIR}/0001-remove_SE1_10b_depend.patch"
+	"${FILESDIR}/samtfe-1.10.4-to-1.10.5-pre.patch"
 	"${FILESDIR}/0002-Fixed_Platform_definition.patch"
-	"${FILESDIR}/rparh_security_vk_1.10.5.patch"
+	"${FILESDIR}/0003-Fix-load-some-incorrect-custom-maps.patch"
+	"${FILESDIR}/rparh_security.patch"
 )
 
 src_configure() {
@@ -160,6 +158,6 @@ pkg_postinst() {
 	elog "     Look at:"
 	elog "        https://github.com/tx00100xt/serioussam-overlay/README.md"
 	elog "     For information on the first launch of the game"
- 	elog ""
+	elog ""
     echo
 }

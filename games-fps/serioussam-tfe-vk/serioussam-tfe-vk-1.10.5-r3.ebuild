@@ -5,13 +5,13 @@ EAPI=7
 
 inherit cmake desktop
 
-MY_PN="SamTSE"
+MY_PN="SamTFE"
 # Game name
-GN="serioussamse"
+GN="serioussam"
 
-DESCRIPTION="Linux port of Serious Sam Classic The Second Encounter"
-HOMEPAGE="https://github.com/tx00100xt/SeriousSamClassic"
-SRC_URI="https://github.com/tx00100xt/SeriousSamClassic/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"
+DESCRIPTION="Linux port of Serious Sam Classic The First Encounter with Vulkan support"
+HOMEPAGE="https://github.com/tx00100xt/SeriousSamClassic-VK"
+SRC_URI="https://github.com/tx00100xt/SeriousSamClassic-VK/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"
 
 LICENSE="GPL-2"
 SLOT="0"
@@ -20,11 +20,14 @@ RESTRICT="bindist mirror"
 IUSE="alsa pipewire"
 
 RDEPEND="
-    !games-fps/serioussam-tse-vk
-	media-libs/libsdl2[video,joystick,opengl]
+    !games-fps/serioussam-tfe
+	media-libs/libsdl2[video,joystick,opengl,vulkan]
 	media-libs/libvorbis
     sys-libs/zlib
 	sys-devel/flex
+    sys-devel/bison
+    dev-util/vulkan-headers
+    media-libs/vulkan-layers
     sys-devel/bison
 	alsa? (
 		>=media-libs/libsdl2-2.0.6[alsa,sound]
@@ -37,58 +40,61 @@ RDEPEND="
 DEPEND="${RDEPEND}"
 BDEPEND="virtual/pkgconfig"
 
-S="${WORKDIR}/SeriousSamClassic-${PV}/${MY_PN}/Sources"
-MY_CONTENT="${WORKDIR}/SeriousSamClassic-${PV}/${MY_PN}"
+S="${WORKDIR}/SeriousSamClassic-VK-${PV}/${MY_PN}/Sources"
+MY_CONTENT="${WORKDIR}/SeriousSamClassic-VK-${PV}/${MY_PN}"
 
 QA_TEXTRELS="
-usr/lib/${GN}/libEntitiesMP.so
-usr/lib/${GN}/libGameMP.so
+usr/lib/${GN}/libEntities.so
+usr/lib/${GN}/libGame.so
 usr/lib/${GN}/libamp11lib.so
 usr/lib/${GN}/libShaders.so
-usr/lib/libEngineMP.so
-usr/lib64/${GN}/libEntitiesMP.so
-usr/lib64/${GN}/libGameMP.so
+usr/lib/libEngine.so
+usr/lib64/${GN}/libEntities.so
+usr/lib64/${GN}/libGame.so
 usr/lib64/${GN}/libamp11lib.so
 usr/lib64/${GN}/libShaders.so
-usr/lib64/libEngineMP.so
+usr/lib64/libEngine.so
 "
 
 QA_FLAGS_IGNORED="
-usr/lib/${GN}/libEntitiesMP.so
-usr/lib/${GN}/libGameMP.so
+usr/lib/${GN}/libEntities.so
+usr/lib/${GN}/libGame.so
 usr/lib/${GN}/libamp11lib.so
 usr/lib/${GN}/libShaders.so
-usr/lib/libEngineMP.so
-usr/lib64/${GN}/libEntitiesMP.so
-usr/lib64/${GN}/libGameMP.so
+usr/lib/libEngine.so
+usr/lib64/${GN}/libEntities.so
+usr/lib64/${GN}/libGame.so
 usr/lib64/${GN}/libamp11lib.so
 usr/lib64/${GN}/libShaders.so
-usr/lib64/libEngineMP.so
+usr/lib64/libEngine.so
+usr/bin/${GN}
+usr/bin/${GN}-ded
 "
 
 PATCHES=(
-	"${FILESDIR}/samtse-1.10.4-to-1.10.5-pre.patch"
+	"${FILESDIR}/0001-remove_SE1_10b_depend.patch"
 	"${FILESDIR}/0002-Fixed_Platform_definition.patch"
-	"${FILESDIR}/rparh_security.patch"
+	"${FILESDIR}/0003-Fix-load-some-incorrect-custom-maps.patch"
+	"${FILESDIR}/rparh_security_vk_1.10.5.patch"
 )
 
 src_configure() {
     rm -rf "${MY_CONTENT}"/Tools.Win32 || die "Failed to removed Win32 stuff"
     einfo "Choosing the player's standard weapon..."
-	rm -f "${MY_CONTENT}/Sources/EntitiesMP/PlayerWeapons.es" || die "Failed to removed PlayerWeapons.es"
-    mv "${MY_CONTENT}/Sources/EntitiesMP/PlayerWeapons_old.es" "${MY_CONTENT}/Sources/EntitiesMP/PlayerWeapons.es" || die "Failed to moved PlayerWeapons.es"
+    rm -f "${MY_CONTENT}/Sources/Entities/PlayerWeapons.es" || die "Failed to removed PlayerWeapons.es"
+    mv "${MY_CONTENT}/Sources/Entities/PlayerWeapons_old.es" "${MY_CONTENT}/Sources/Entities/PlayerWeapons.es" || die "Failed to moved PlayerWeapons.es"
 
     einfo "Setting build type Release..."
     CMAKE_BUILD_TYPE="Release"
     if use arm64
     then
         local mycmakeargs=(
-            -DTFE=FALSE
+            -DTFE=TRUE
             -DRPI4=TRUE
         )
     else
         local mycmakeargs=(
-            -DTFE=FALSE
+            -DTFE=TRUE
         )
     fi
     cmake_src_configure
@@ -102,12 +108,12 @@ src_install() {
 	if use x86; then
     	mkdir "${D}/usr/lib" && mkdir "${D}/usr/lib/${GN}"  && mkdir "${D}/usr/lib/${GN}/Mods"
         # moving libs 
-        mv "${BUILD_DIR}"/Debug/libEngineMP.so "${D}/usr/lib" || die "Failed to moved libEngine.so"
+        mv "${BUILD_DIR}"/Debug/libEngine.so "${D}/usr/lib" || die "Failed to moved libEngine.so"
         mv "${BUILD_DIR}"/Debug/* "${D}/usr/lib/${GN}" || die "Failed to moved game libs"
     else
     	mkdir "${D}/usr/lib64" && mkdir "${D}/usr/lib64/${GN}"  && mkdir "${D}/usr/lib64/${GN}/Mods"
         # moving libs 
-        mv "${BUILD_DIR}"/Debug/libEngineMP.so "${D}/usr/lib64" || die "Failed to moved libEngine.so"
+        mv "${BUILD_DIR}"/Debug/libEngine.so "${D}/usr/lib64" || die "Failed to moved libEngine.so"
         mv "${BUILD_DIR}"/Debug/* "${D}/usr/lib64/${GN}" || die "Failed to moved game libs"
     fi
 
@@ -115,14 +121,10 @@ src_install() {
     rm -f  "${BUILD_DIR}"/{*.cmake,*.txt,*.a,*.ninja,.gitkeep} || die "Failed to removed temp stuff"
     rm -fr "${BUILD_DIR}"/Debug && rm -fr "${BUILD_DIR}"/CMakeFiles && rm -fr "${MY_CONTENT}/Sources"
     # moving binares
-    mv "${BUILD_DIR}"/serioussamse "${D}/usr/bin/${GN}"  || die "Failed to moved SeriousSam"
+    mv "${BUILD_DIR}"/serioussam "${D}/usr/bin/${GN}"  || die "Failed to moved SeriousSam"
     # moving content
     cp -fr "${MY_CONTENT}"/* "${D}${dir}"
     cp "${FILESDIR}/ssam.xpm" "${D}/${dir}"
-    # fixing start standard game after mod
-    mv "${D}${dir}"/Mods/SecondEncounter "${D}${dir}"/Mods/SeriousSam
-    mv "${D}${dir}"/Mods/SecondEncounter.des "${D}${dir}"/Mods/SeriousSam.des
-    mv "${D}${dir}"/Mods/SecondEncounterTbn.tex "${D}${dir}"/Mods/SeriousSamTbn.tex
 
     # fix scripts for AMD cards
     sed -i 's/mdl_bFineQuality = 0;/mdl_bFineQuality = 1;/g' "${D}/${dir}"/Scripts/GLSettings/RAM.ini
@@ -133,34 +135,32 @@ src_install() {
     cd "${D}/${dir}"
     newicon ssam.xpm ${GN}.xpm
 
-	make_desktop_entry ${GN} "Serious Sam The Second Encounter" ${GN}
+    make_desktop_entry ${GN} "Serious Sam The First Encounter" ${GN}
 }
 
 pkg_postinst() {
 	elog "     ***************************************************************************************"
 	elog "     If you have access to a copy of the game (either by CD or through Steam),"
-	elog "     you can copy the *.gro files to the /usr/share/serioussamse directory."
-	elog "     /usr/share/serioussamse is the directory of the game Serious Sam Classic The Second Encounter"
+	elog "     you can copy the *.gro files to the /usr/share/serioussam directory."
+	elog "     /usr/share/serioussam is the directory of the game Serious Sam Classic The First Encounter"
 	elog "     ***************************************************************************************"
-	elog "     Copy all *.gro files and Help folder from the game directory to serioussamse directory."
+	elog "     Copy all *.gro files and Help folder from the game directory to serioussam directory."
 	elog "     At the current time the files are:"
 	elog "      - Help (folder)"
-	elog "      - SE1_00.gro"
-	elog "      - SE1_00_Extra.gro"
-	elog "      - SE1_00_ExtraTools.gro"
-	elog "      - SE1_00_Levels.gro"
-	elog "      - SE1_00.gro"
-	elog "      - SE1_00_Music.gro"
+	elog "      - Levels (folder)"
+	elog "      - 1_00_ExtraTools.gro"
+	elog "      - 1_00_music.gro"
+	elog "      - 1_00c.gro"
+	elog "      - 1_00c_scripts.gro"
 	elog "      - 1_04_patch.gro"
-	elog "      - 1_07_patch.gro"
 	elog "     ***************************************************************************************"
 	elog "     You can also install:"
-  	elog "                emerge serioussam-tse-data"
+  	elog "                emerge serioussam-tfe-data"
   	elog "     to extract game content from your CD or mounted image."
 	elog "     ***************************************************************************************"
 	elog "     Look at:"
 	elog "        https://github.com/tx00100xt/serioussam-overlay/README.md"
 	elog "     For information on the first launch of the game"
-	elog ""
+ 	elog ""
     echo
 }

@@ -67,8 +67,9 @@ usr/lib64/libEngineMP.so
 "
 
 PATCHES=(
-	"${FILESDIR}/0001-remove_SE1_10b_depend.patch"
+	"${FILESDIR}/samtse-1.10.4-to-1.10.5-pre.patch"
 	"${FILESDIR}/0002-Fixed_Platform_definition.patch"
+	"${FILESDIR}/0003-Fix-load-some-incorrect-custom-maps.patch"
 	"${FILESDIR}/rparh_security.patch"
 )
 
