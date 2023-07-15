@@ -102,6 +102,11 @@ To install Hero Number One Modification type this in your terminal:
 emerge serioussam-hno
 ```
 
+To install Bright Island, Ancient Rome Next Encounter and Rakanishu Mappacks type this in your terminal:
+```
+emerge serioussam-brightisland-mappack serioussam-nextencounter-mappack serioussam-rakanishu-mappacks
+```
+
 ### Metapackage's
 
 You can use metapackage for Serious Sam The First Encounte and Serious Sam The Second Encounter.

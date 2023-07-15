@@ -28,6 +28,9 @@ RDEPEND="
 	games-fps/serioussam-hno
 	games-fps/serioussam-st8vi
 	games-fps/serioussam-st8vipe
+	games-fps/serioussam-brightisland-mappack
+	games-fps/serioussam-nextencounter-mappack
+	games-fps/serioussam-rakanishu-mappacks
 	vulkan? ( =games-fps/serioussam-tse-vk-${SSAM_BRANCH}-r3 )
 	!vulkan? ( =games-fps/serioussam-tse-${SSAM_BRANCH}-r3 )
 "
