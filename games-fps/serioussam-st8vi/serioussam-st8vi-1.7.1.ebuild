@@ -16,6 +16,8 @@ SRC_URI="https://github.com/tx00100xt/SE1-TSE-${MY_MOD}/archive/refs/tags/v${PV}
 	https://archive.org/download/sam-tse-st8vi/SamTSE-ST8VI.tar.xz"
 
 MY_MOD_ARC="SamTSE-ST8VI.tar.xz"
+MY_LIB1="libEntitiesMP.so"
+MY_LIB2="libGameMP.so"
 
 LICENSE="GPL-2"
 SLOT="0"
@@ -34,17 +36,17 @@ S="${WORKDIR}/SE1-TSE-${MY_MOD}-${PV}/Sources"
 MY_CONTENT="${WORKDIR}/SE1-TSE-${MY_MOD}-${PV}/${MY_PN}"
 
 QA_TEXTRELS="
-usr/lib/${GN}/Mods/${MY_MOD}/libEntitiesMP.so
-usr/lib/${GN}/Mods/${MY_MOD}/libGameM{.so
-usr/lib64/${GN}/Mods/${MY_MOD}/libEntitiesMP.so
-usr/lib64/${GN}/Mods/${MY_MOD}/libGameMP.so
+usr/lib/${GN}/Mods/${MY_MOD}/${MY_LIB1}
+usr/lib/${GN}/Mods/${MY_MOD}/${MY_LIB2}
+usr/lib64/${GN}/Mods/${MY_MOD}/${MY_LIB1}
+usr/lib64/${GN}/Mods/${MY_MOD}/${MY_LIB2}
 "
 
 QA_FLAGS_IGNORED="
-usr/lib/${GN}/Mods/${MY_MOD}/libEntitiesMP.so
-usr/lib/${GN}/Mods/${MY_MOD}/libGameM{.so
-usr/lib64/${GN}/Mods/${MY_MOD}/libEntitiesMP.so
-usr/lib64/${GN}/Mods/${MY_MOD}/libGameMP.so
+usr/lib/${GN}/Mods/${MY_MOD}/${MY_LIB1}
+usr/lib/${GN}/Mods/${MY_MOD}/${MY_LIB2}
+usr/lib64/${GN}/Mods/${MY_MOD}/${MY_LIB1}
+usr/lib64/${GN}/Mods/${MY_MOD}/${MY_LIB2}
 "
 
 src_configure() {
@@ -79,12 +81,12 @@ src_install() {
 
 	# moving libs
 	if use x86; then
-		mv "${BUILD_DIR}"/Debug/libEntitiesMP.so "${D}/usr/lib/${GN}/Mods/${MY_MOD}" || die "Failed to moved libEntitiesMP.so"
-		mv "${BUILD_DIR}"/Debug/libGameMP.so "${D}/usr/lib/${GN}/Mods/${MY_MOD}" || die "Failed to moved libGameMP.so"
+		mv "${BUILD_DIR}"/Debug/${MY_LIB1} "${D}/usr/lib/${GN}/Mods/${MY_MOD}" || die "Failed to moved ${MY_LIB1}"
+		mv "${BUILD_DIR}"/Debug/${MY_LIB2} "${D}/usr/lib/${GN}/Mods/${MY_MOD}" || die "Failed to moved ${MY_LIB2}"
 		# dosym "/usr/lib/${GN}/libamp11lib.so" "/usr/lib/${GN}/Mods/${MY_MOD}/libamp11lib.so"
 	else
-		mv "${BUILD_DIR}"/Debug/libEntitiesMP.so "${D}/usr/lib64/${GN}/Mods/${MY_MOD}" || die "Failed to moved libEntitiesMP.so"
-		mv "${BUILD_DIR}"/Debug/libGameMP.so "${D}/usr/lib64/${GN}/Mods/${MY_MOD}" || die "Failed to moved libGameMP.so"
+		mv "${BUILD_DIR}"/Debug/${MY_LIB1} "${D}/usr/lib64/${GN}/Mods/${MY_MOD}" || die "Failed to moved ${MY_LIB1}"
+		mv "${BUILD_DIR}"/Debug/${MY_LIB2} "${D}/usr/lib64/${GN}/Mods/${MY_MOD}" || die "Failed to moved ${MY_LIB2}"
 		# dosym "/usr/lib64/${GN}/libamp11lib.so" "/usr/lib64/${GN}/Mods/${MY_MOD}/libamp11lib.so"
 	fi
 	# removing temp stuff

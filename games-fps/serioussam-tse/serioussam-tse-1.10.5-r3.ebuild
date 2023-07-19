@@ -75,9 +75,6 @@ PATCHES=(
 
 src_configure() {
 	rm -rf "${MY_CONTENT}"/Tools.Win32 || die "Failed to removed Win32 stuff"
-	einfo "Choosing the player's standard weapon..."
-	rm -f "${MY_CONTENT}/Sources/EntitiesMP/PlayerWeapons.es" || die "Failed to removed PlayerWeapons.es"
-	mv "${MY_CONTENT}/Sources/EntitiesMP/PlayerWeapons_old.es" "${MY_CONTENT}/Sources/EntitiesMP/PlayerWeapons.es" || die "Failed to moved PlayerWeapons.es"
 
 	einfo "Setting build type Release..."
 	CMAKE_BUILD_TYPE="Release"

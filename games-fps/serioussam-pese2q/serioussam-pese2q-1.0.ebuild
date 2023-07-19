@@ -16,6 +16,8 @@ SRC_URI="https://github.com/tx00100xt/SE1-ParseError/archive/refs/tags/v${PV}.ta
 	https://github.com/tx00100xt/serioussam-mods/raw/main/SamTSE-ParseError/SamTSE-ParseError.tar.xz"
 
 MY_MOD_ARC="SamTSE-ParseError.tar.xz"
+MY_LIB1="libEntitiesMP.so"
+MY_LIB2="libGameMP.so"
 
 LICENSE="GPL-2"
 SLOT="0"
@@ -34,25 +36,25 @@ S="${WORKDIR}/SE1-ParseError-${PV}/Sources"
 MY_CONTENT="${WORKDIR}/SE1-ParseError-${PV}/${MY_PN}"
 
 QA_TEXTRELS="
-usr/lib/${GN}/Mods/${MY_MOD}/Bin/libEntitiesMP.so
-usr/lib/${GN}/Mods/${MY_MOD}/Bin/libGameMP.so
-usr/lib/${GN}/Mods/${MY_MOD}HD/Bin/libEntitiesMP.so
-usr/lib/${GN}/Mods/${MY_MOD}HD/Bin/libGameMP.so
-usr/lib64/${GN}/Mods/${MY_MOD}/Bin/libEntitiesMP.so
-usr/lib64/${GN}/Mods/${MY_MOD}/Bin/libGameMP.so
-usr/lib64/${GN}/Mods/${MY_MOD}HD/Bin/libEntitiesMP.so
-usr/lib64/${GN}/Mods/${MY_MOD}HD/Bin/libGameMP.so
+usr/lib/${GN}/Mods/${MY_MOD}/Bin/${MY_LIB1}
+usr/lib/${GN}/Mods/${MY_MOD}/Bin/${MY_LIB2}
+usr/lib/${GN}/Mods/${MY_MOD}HD/Bin/${MY_LIB1}
+usr/lib/${GN}/Mods/${MY_MOD}HD/Bin/${MY_LIB2}
+usr/lib64/${GN}/Mods/${MY_MOD}/Bin/${MY_LIB1}
+usr/lib64/${GN}/Mods/${MY_MOD}/Bin/${MY_LIB2}
+usr/lib64/${GN}/Mods/${MY_MOD}HD/Bin/${MY_LIB1}
+usr/lib64/${GN}/Mods/${MY_MOD}HD/Bin/${MY_LIB2}
 "
 
 QA_FLAGS_IGNORED="
-usr/lib/${GN}/Mods/${MY_MOD}/Bin/libEntitiesMP.so
-usr/lib/${GN}/Mods/${MY_MOD}/Bin/libGameMP.so
-usr/lib/${GN}/Mods/${MY_MOD}HD/Bin/libEntitiesMP.so
-usr/lib/${GN}/Mods/${MY_MOD}HD/Bin/libGameMP.so
-usr/lib64/${GN}/Mods/${MY_MOD}/Bin/libEntitiesMP.so
-usr/lib64/${GN}/Mods/${MY_MOD}/Bin/libGameMP.so
-usr/lib64/${GN}/Mods/${MY_MOD}HD/Bin/libEntitiesMP.so
-usr/lib64/${GN}/Mods/${MY_MOD}HD/Bin/libGameMP.so
+usr/lib/${GN}/Mods/${MY_MOD}/Bin/${MY_LIB1}
+usr/lib/${GN}/Mods/${MY_MOD}/Bin/${MY_LIB2}
+usr/lib/${GN}/Mods/${MY_MOD}HD/Bin/${MY_LIB1}
+usr/lib/${GN}/Mods/${MY_MOD}HD/Bin/${MY_LIB2}
+usr/lib64/${GN}/Mods/${MY_MOD}/Bin/${MY_LIB1}
+usr/lib64/${GN}/Mods/${MY_MOD}/Bin/${MY_LIB2}
+usr/lib64/${GN}/Mods/${MY_MOD}HD/Bin/${MY_LIB1}
+usr/lib64/${GN}/Mods/${MY_MOD}HD/Bin/${MY_LIB2}
 "
 
 src_configure() {
@@ -91,13 +93,11 @@ src_install() {
 
 	# moving libs
 	if use x86; then
-		mv "${BUILD_DIR}"/Debug/libEntitiesMP.so "${D}/usr/lib/${GN}/Mods/${MY_MOD}" || die "Failed to moved libEntities.so"
-		mv "${BUILD_DIR}"/Debug/libGameMP.so "${D}/usr/lib/${GN}/Mods/${MY_MOD}" || die "Failed to moved libGame.so"
-		# dosym "/usr/lib/${GN}/libamp11lib.so" "/usr/lib/${GN}/Mods/${MY_MOD}/libamp11lib.so"
+		mv "${BUILD_DIR}"/Debug/${MY_LIB1} "${D}/usr/lib/${GN}/Mods/${MY_MOD}" || die "Failed to moved libEntities.so"
+		mv "${BUILD_DIR}"/Debug/${MY_LIB2} "${D}/usr/lib/${GN}/Mods/${MY_MOD}" || die "Failed to moved libGame.so"
 	else
-		mv "${BUILD_DIR}"/Debug/libEntitiesMP.so "${D}/usr/lib64/${GN}/Mods/${MY_MOD}" || die "Failed to moved libEntities.so"
-		mv "${BUILD_DIR}"/Debug/libGameMP.so "${D}/usr/lib64/${GN}/Mods/${MY_MOD}" || die "Failed to moved libGame.so"
-		# dosym "/usr/lib64/${GN}/libamp11lib.so" "/usr/lib64/${GN}/Mods/${MY_MOD}/libamp11lib.so"
+		mv "${BUILD_DIR}"/Debug/${MY_LIB1} "${D}/usr/lib64/${GN}/Mods/${MY_MOD}" || die "Failed to moved libEntities.so"
+		mv "${BUILD_DIR}"/Debug/${MY_LIB2} "${D}/usr/lib64/${GN}/Mods/${MY_MOD}" || die "Failed to moved libGame.so"
 	fi
 
 	# build HD
@@ -123,13 +123,15 @@ src_install() {
 
 	# moving libs
 	if use x86; then
-		mv "${S}"/cmake-build/Debug/libEntitiesMP.so "${D}/usr/lib/${GN}/Mods/${MY_MOD}HD" || die "Failed to moved libEntities.so"
-		mv "${S}"/cmake-build/Debug/libGameMP.so "${D}/usr/lib/${GN}/Mods/${MY_MOD}HD" || die "Failed to moved libGame.so"
-		# dosym "/usr/lib/${GN}/libamp11lib.so" "/usr/lib/${GN}/Mods/${MY_MOD}HD/libamp11lib.so"
+		mv "${S}"/cmake-build/Debug/${MY_LIB1} \
+			"${D}/usr/lib/${GN}/Mods/${MY_MOD}HD" || die "Failed to moved libEntities.so"
+		mv "${S}"/cmake-build/Debug/${MY_LIB2} \
+			"${D}/usr/lib/${GN}/Mods/${MY_MOD}HD" || die "Failed to moved libGame.so"
 	else
-		mv "${S}"/cmake-build/Debug/libEntitiesMP.so "${D}/usr/lib64/${GN}/Mods/${MY_MOD}HD" || die "Failed to moved libEntities.so"
-		mv "${S}"/cmake-build/Debug/libGameMP.so "${D}/usr/lib64/${GN}/Mods/${MY_MOD}HD" || die "Failed to moved libGame.so"
-		# dosym "/usr/lib64/${GN}/libamp11lib.so" "/usr/lib64/${GN}/Mods/${MY_MOD}HD/libamp11lib.so"
+		mv "${S}"/cmake-build/Debug/${MY_LIB1} \
+			"${D}/usr/lib64/${GN}/Mods/${MY_MOD}HD" || die "Failed to moved libEntities.so"
+		mv "${S}"/cmake-build/Debug/${MY_LIB2} \
+			"${D}/usr/lib64/${GN}/Mods/${MY_MOD}HD" || die "Failed to moved libGame.so"
 	fi
 
 	# removing temp stuff

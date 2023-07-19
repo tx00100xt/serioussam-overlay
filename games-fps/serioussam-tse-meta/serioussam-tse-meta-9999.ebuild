@@ -30,6 +30,6 @@ RDEPEND="
 	games-fps/serioussam-brightisland-mappack
 	games-fps/serioussam-nextencounter-mappack
 	games-fps/serioussam-rakanishu-mappacks
-	vulkan? ( =games-fps/serioussam-tse-vk-${SSAM_BRANCH} )
-	!vulkan? ( =games-fps/serioussam-tse-${SSAM_BRANCH} )
+	vulkan? ( ~games-fps/serioussam-tse-vk-${SSAM_BRANCH} )
+	!vulkan? ( ~games-fps/serioussam-tse-${SSAM_BRANCH} )
 "

@@ -55,7 +55,7 @@ PATCHES=(
 
 src_configure() {
 	einfo "Choosing the player's xplus weapon..."
-	sed -i 's/XPLUS modification" FALSE/XPLUS modification" TRUE/g' "${S}"/CMakeLists.txt || die "Failed to switch to XPLUS"
+	sed -i 's/XPLUS modification" FALSE/XPLUS modification" TRUE/g' "${S}"/CMakeLists.txt || die "XPLUS switch Failed"
 
 	einfo "Setting build type Release..."
 	CMAKE_BUILD_TYPE="Release"
@@ -87,13 +87,13 @@ src_install() {
 	# moving libs
 	if use x86; then
 		mkdir "${D}/usr/lib/${GN}/Mods/XPLUS"
-		mv "${BUILD_DIR}"/Debug/libEntitiesMP.so "${D}/usr/lib/${GN}/Mods/XPLUS" || die "Failed to moved libEntities.so"
-		mv "${BUILD_DIR}"/Debug/libGameMP.so "${D}/usr/lib/${GN}/Mods/XPLUS" || die "Failed to moved libGame.so"
+		mv "${BUILD_DIR}"/Debug/libEntitiesMP.so "${D}/usr/lib/${GN}/Mods/XPLUS" || die "Failed moved libEntities.so"
+		mv "${BUILD_DIR}"/Debug/libGameMP.so "${D}/usr/lib/${GN}/Mods/XPLUS" || die "Failed moved libGame.so"
 		# dosym "/usr/lib/${GN}/libamp11lib.so" "/usr/lib/${GN}/Mods/XPLUS/libamp11lib.so"
 	else
 		mkdir "${D}/usr/lib64/${GN}/Mods/XPLUS"
-		mv "${BUILD_DIR}"/Debug/libEntitiesMP.so "${D}/usr/lib64/${GN}/Mods/XPLUS" || die "Failed to moved libEntities.so"
-		mv "${BUILD_DIR}"/Debug/libGameMP.so "${D}/usr/lib64/${GN}/Mods/XPLUS" || die "Failed to moved libGame.so"
+		mv "${BUILD_DIR}"/Debug/libEntitiesMP.so "${D}/usr/lib64/${GN}/Mods/XPLUS" || die "Failed moved libEntities.so"
+		mv "${BUILD_DIR}"/Debug/libGameMP.so "${D}/usr/lib64/${GN}/Mods/XPLUS" || die "Failed moved libGame.so"
 		# dosym "/usr/lib64/${GN}/libamp11lib.so" "/usr/lib64/${GN}/Mods/XPLUS/libamp11lib.so"
 	fi
 
