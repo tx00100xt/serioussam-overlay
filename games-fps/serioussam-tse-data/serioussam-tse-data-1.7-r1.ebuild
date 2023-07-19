@@ -3,7 +3,7 @@
 
 EAPI=7
 
-inherit cdrom eutils unpacker
+inherit cdrom unpacker
 
 PATCH_PREFIX="Patch_1.07_SE"
 # Game name
@@ -18,7 +18,7 @@ S="${WORKDIR}"
 
 LICENSE="all-rights-reserved"
 SLOT="0"
-KEYWORDS="~amd64 ~x86 ~arm64"
+KEYWORDS="~amd64 ~arm64 ~x86"
 IUSE="ru"
 
 DEPEND="|| ( games-fps/serioussam-tse-vk games-fps/serioussam-tse )"
@@ -42,8 +42,8 @@ src_install() {
 	insinto "${dir}"
 	doins -r "${CDROM_ROOT}"/Install/*
 
-    mv "${WORKDIR}"/*.gro "${D}/${dir}" || die "failed to moved patch 1.07"
-    mv "${D}/${dir}"/Scripts/PersistentSymbols.ini "${WORKDIR}" || die "failed to moved PersistentSymbols.ini"
+	mv "${WORKDIR}"/*.gro "${D}/${dir}" || die "failed to moved patch 1.07"
+	mv "${D}/${dir}"/Scripts/PersistentSymbols.ini "${WORKDIR}" || die "failed to moved PersistentSymbols.ini"
 
 	rm -rf "${D}/${dir}"/Bin || die "failed to removed stuff"
 	rm -rf "${D}/${dir}"/Controls || die "failed to removed stuff"
@@ -54,17 +54,17 @@ src_install() {
 	rm -rf "${D}/${dir}"/Scripts || die "failed to removed stuff"
 	rm -rf "${D}/${dir}"/VirtualTrees || die "failed to removed stuff"
 	rm -f  "${D}/${dir}"/Help/ShellSymbols.txt || die "failed to removed stuff"
-    rm -f  "${D}/${dir}"/ModEXT.txt  || die "failed to removed stuff"
-    mkdir "${D}/${dir}/Scripts"
-    mv "${WORKDIR}"/PersistentSymbols.ini "${D}/${dir}/Scripts" || die "failed to moved PersistentSymbols.ini"
+	rm -f  "${D}/${dir}"/ModEXT.txt  || die "failed to removed stuff"
+	mkdir "${D}/${dir}/Scripts"
+	mv "${WORKDIR}"/PersistentSymbols.ini "${D}/${dir}/Scripts" || die "failed to moved PersistentSymbols.ini"
 
 	if use ru; then
-	     mv "${D}/${dir}"/Locales/rus/SE1_00_Sounds_RUS.gro "${D}/${dir}" 
-	     mv "${D}/${dir}"/Locales/rus/SE1_00_Texts_RUS.gro "${D}/${dir}"
-         mv "${D}/${dir}"/Locales/rus/SEGold_DM.gro "${D}/${dir}"
+		 mv "${D}/${dir}"/Locales/rus/SE1_00_Sounds_RUS.gro "${D}/${dir}"
+		 mv "${D}/${dir}"/Locales/rus/SE1_00_Texts_RUS.gro "${D}/${dir}"
+		 mv "${D}/${dir}"/Locales/rus/SEGold_DM.gro "${D}/${dir}"
 	fi
 
-    rm -rf "${D}/${dir}"/Locales || die "failed to removed stuff"
+	rm -rf "${D}/${dir}"/Locales || die "failed to removed stuff"
 
 	# Remove useless Windows files
 	rm -f "${D}/${dir}"/{*.exe,*.ex_,*.bmp,*.inx,*.hdr,*.bin,*.cab,*.ini,*.log} || die "Failed to remove windows cruft"

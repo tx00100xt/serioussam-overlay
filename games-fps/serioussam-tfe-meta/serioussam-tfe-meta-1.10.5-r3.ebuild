@@ -1,14 +1,13 @@
 # Copyright 1999-2023 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=6
+EAPI=7
 
 if [[ ${PV} == 9999 ]]; then
 	SSAM_BRANCH=9999
 else
-	inherit eapi7-ver
 	SSAM_BRANCH="${PV}"
-	KEYWORDS="~amd64 ~x86 ~arm64"
+	KEYWORDS="~amd64 ~arm64 ~x86"
 fi
 
 DESCRIPTION="Meta package for Serious Sam Classic and Mods"

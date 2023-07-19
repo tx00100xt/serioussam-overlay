@@ -3,7 +3,7 @@
 
 EAPI=7
 
-inherit cdrom eutils unpacker
+inherit cdrom unpacker
 
 # Game name
 GN="serioussam"
@@ -23,7 +23,7 @@ S="${WORKDIR}"
 
 LICENSE="LOKI-EULA"
 SLOT="0"
-KEYWORDS="~amd64 ~x86 ~arm64"
+KEYWORDS="~amd64 ~arm64 ~x86"
 IUSE="ru"
 
 DEPEND="|| ( games-fps/serioussam-tfe-vk games-fps/serioussam-tfe )"
@@ -36,7 +36,7 @@ pkg_setup() {
 
 src_unpack() {
 	mkdir Levels Mods
-    unpack_makeself "${LOKI_PACKAGE}"
+	unpack_makeself "${LOKI_PACKAGE}"
 }
 
 src_install() {
@@ -45,9 +45,9 @@ src_install() {
 	einfo "Copying from ${CDROM_ROOT}"
 	insinto "${dir}"
 	doins -r "${CDROM_ROOT}"/Install/*
-    nonfatal unpack ./SeriousSamPatch105_USA_linux.tar.bz2
-    mv "${WORKDIR}"/*.gro "${D}/${dir}" || die "failed to moved patch 1.05"
-    mv "${D}/${dir}"/Scripts/PersistentSymbols.ini "${WORKDIR}" || die "failed to moved PersistentSymbols.ini"
+	nonfatal unpack ./SeriousSamPatch105_USA_linux.tar.bz2
+	mv "${WORKDIR}"/*.gro "${D}/${dir}" || die "failed to moved patch 1.05"
+	mv "${D}/${dir}"/Scripts/PersistentSymbols.ini "${WORKDIR}" || die "failed to moved PersistentSymbols.ini"
 
 	rm -rf "${D}/${dir}"/Bin || die "failed to removed stuff"
 	rm -rf "${D}/${dir}"/Controls || die "failed to removed stuff"
@@ -58,16 +58,16 @@ src_install() {
 	rm -rf "${D}/${dir}"/Scripts || die "failed to removed stuff"
 	rm -rf "${D}/${dir}"/VirtualTrees || die "failed to removed stuff"
 	rm -f  "${D}/${dir}"/Help/ShellSymbols.txt  || die "failed to removed stuff"
-    mkdir "${D}/${dir}/Scripts"
-    mv "${WORKDIR}"/PersistentSymbols.ini "${D}/${dir}/Scripts" || die "failed to moved PersistentSymbols.ini"
+	mkdir "${D}/${dir}/Scripts"
+	mv "${WORKDIR}"/PersistentSymbols.ini "${D}/${dir}/Scripts" || die "failed to moved PersistentSymbols.ini"
 
 	if use ru; then
-	     mv "${D}/${dir}"/Locales/rus/1_00*_Sounds_RUS.gro "${D}/${dir}" 
-	     mv "${D}/${dir}"/Locales/rus/1_00*_Texts_RUS.gro "${D}/${dir}"
+		 mv "${D}/${dir}"/Locales/rus/1_00*_Sounds_RUS.gro "${D}/${dir}"
+		 mv "${D}/${dir}"/Locales/rus/1_00*_Texts_RUS.gro "${D}/${dir}"
 	fi
-    "${D}/${dir}"
+	"${D}/${dir}"
 
-    rm -rf "${D}/${dir}"/Locales || die "failed to removed stuff"
+	rm -rf "${D}/${dir}"/Locales || die "failed to removed stuff"
 
 	# Remove useless Windows files
 	rm -f "${D}/${dir}"/{*.exe,*.ex_,*.bmp,*.inx,*.hdr,*.bin,*.cab,*.ini,*.log} || die "Failed to remove windows cruft"

@@ -19,13 +19,13 @@ RESTRICT="bindist mirror"
 IUSE="alsa pipewire"
 
 RDEPEND="
-    !games-fps/serioussam-tse-vk
+	!games-fps/serioussam-tse-vk
 	media-libs/libsdl2[video,joystick,opengl]
 	media-libs/libvorbis
-    dev-vcs/git
-    sys-libs/zlib
+	dev-vcs/git
+	sys-libs/zlib
 	sys-devel/flex
-    sys-devel/bison
+	sys-devel/bison
 	alsa? (
 		>=media-libs/libsdl2-2.0.6[alsa,sound]
 	)
@@ -71,65 +71,65 @@ PATCHES=(
 )
 
 src_configure() {
-    rm -rf "${MY_CONTENT}"/Tools.Win32 || die "Failed to removed Win32 stuff"
-    einfo "Choosing the player's standard weapon..."
+	rm -rf "${MY_CONTENT}"/Tools.Win32 || die "Failed to removed Win32 stuff"
+	einfo "Choosing the player's standard weapon..."
 	rm -f "${MY_CONTENT}/Sources/EntitiesMP/PlayerWeapons.es" || die "Failed to removed PlayerWeapons.es"
-    mv "${MY_CONTENT}/Sources/EntitiesMP/PlayerWeapons_old.es" "${MY_CONTENT}/Sources/EntitiesMP/PlayerWeapons.es" || die "Failed to moved PlayerWeapons.es"
+	mv "${MY_CONTENT}/Sources/EntitiesMP/PlayerWeapons_old.es" "${MY_CONTENT}/Sources/EntitiesMP/PlayerWeapons.es" || die "Failed to moved PlayerWeapons.es"
 
-    einfo "Setting build type Release..."
-    CMAKE_BUILD_TYPE="Release"
-    if use arm64
-    then
-        local mycmakeargs=(
-            -DTFE=FALSE
-            -DRPI4=TRUE
-        )
-    else
-        local mycmakeargs=(
-            -DTFE=FALSE
-        )
-    fi
-    cmake_src_configure
+	einfo "Setting build type Release..."
+	CMAKE_BUILD_TYPE="Release"
+	if use arm64
+	then
+		local mycmakeargs=(
+			-DTFE=FALSE
+			-DRPI4=TRUE
+		)
+	else
+		local mycmakeargs=(
+			-DTFE=FALSE
+		)
+	fi
+	cmake_src_configure
 }
 
 src_install() {
-    local dir="/usr/share/${GN}"
+	local dir="/usr/share/${GN}"
 
-    # crerate install dirs
-    mkdir "${D}/usr" && mkdir "${D}/usr/share" && mkdir "${D}/usr/bin" && mkdir "${D}${dir}"
+	# crerate install dirs
+	mkdir "${D}/usr" && mkdir "${D}/usr/share" && mkdir "${D}/usr/bin" && mkdir "${D}${dir}"
 	if use x86; then
-    	mkdir "${D}/usr/lib" && mkdir "${D}/usr/lib/${GN}"  && mkdir "${D}/usr/lib/${GN}/Mods"
-        # moving libs 
-        mv "${BUILD_DIR}"/Debug/libEngineMP.so "${D}/usr/lib" || die "Failed to moved libEngine.so"
-        mv "${BUILD_DIR}"/Debug/* "${D}/usr/lib/${GN}" || die "Failed to moved game libs"
-    else
-    	mkdir "${D}/usr/lib64" && mkdir "${D}/usr/lib64/${GN}"  && mkdir "${D}/usr/lib64/${GN}/Mods"
-        # moving libs 
-        mv "${BUILD_DIR}"/Debug/libEngineMP.so "${D}/usr/lib64" || die "Failed to moved libEngine.so"
-        mv "${BUILD_DIR}"/Debug/* "${D}/usr/lib64/${GN}" || die "Failed to moved game libs"
-    fi
+		mkdir "${D}/usr/lib" && mkdir "${D}/usr/lib/${GN}"  && mkdir "${D}/usr/lib/${GN}/Mods"
+		# moving libs
+		mv "${BUILD_DIR}"/Debug/libEngineMP.so "${D}/usr/lib" || die "Failed to moved libEngine.so"
+		mv "${BUILD_DIR}"/Debug/* "${D}/usr/lib/${GN}" || die "Failed to moved game libs"
+	else
+		mkdir "${D}/usr/lib64" && mkdir "${D}/usr/lib64/${GN}"  && mkdir "${D}/usr/lib64/${GN}/Mods"
+		# moving libs
+		mv "${BUILD_DIR}"/Debug/libEngineMP.so "${D}/usr/lib64" || die "Failed to moved libEngine.so"
+		mv "${BUILD_DIR}"/Debug/* "${D}/usr/lib64/${GN}" || die "Failed to moved game libs"
+	fi
 
-    # removing temp stuff
-    rm -f  "${BUILD_DIR}"/{*.cmake,*.txt,*.a,*.ninja,.gitkeep} || die "Failed to removed temp stuff"
-    rm -fr "${BUILD_DIR}"/Debug && rm -fr "${BUILD_DIR}"/CMakeFiles && rm -fr "${MY_CONTENT}/Sources"
-    # moving binares
-    mv "${BUILD_DIR}"/serioussamse "${D}/usr/bin/${GN}"  || die "Failed to moved SeriousSam"
-    # moving content
-    cp -fr "${MY_CONTENT}"/* "${D}${dir}"
-    cp "${FILESDIR}/ssam.xpm" "${D}/${dir}"
-    # fixing start standard game after mod
-    mv "${D}${dir}"/Mods/SecondEncounter "${D}${dir}"/Mods/SeriousSam
-    mv "${D}${dir}"/Mods/SecondEncounter.des "${D}${dir}"/Mods/SeriousSam.des
-    mv "${D}${dir}"/Mods/SecondEncounterTbn.tex "${D}${dir}"/Mods/SeriousSamTbn.tex
+	# removing temp stuff
+	rm -f  "${BUILD_DIR}"/{*.cmake,*.txt,*.a,*.ninja,.gitkeep} || die "Failed to removed temp stuff"
+	rm -fr "${BUILD_DIR}"/Debug && rm -fr "${BUILD_DIR}"/CMakeFiles && rm -fr "${MY_CONTENT}/Sources"
+	# moving binares
+	mv "${BUILD_DIR}"/serioussamse "${D}/usr/bin/${GN}"  || die "Failed to moved SeriousSam"
+	# moving content
+	cp -fr "${MY_CONTENT}"/* "${D}${dir}"
+	cp "${FILESDIR}/ssam.xpm" "${D}/${dir}"
+	# fixing start standard game after mod
+	mv "${D}${dir}"/Mods/SecondEncounter "${D}${dir}"/Mods/SeriousSam
+	mv "${D}${dir}"/Mods/SecondEncounter.des "${D}${dir}"/Mods/SeriousSam.des
+	mv "${D}${dir}"/Mods/SecondEncounterTbn.tex "${D}${dir}"/Mods/SeriousSamTbn.tex
 
-    # fix scripts for AMD cards
-    sed -i 's/mdl_bFineQuality = 0;/mdl_bFineQuality = 1;/g' "${D}/${dir}"/Scripts/GLSettings/RAM.ini
-    sed -i 's/mdl_bFineQuality = 0;/mdl_bFineQuality = 1;/g' "${D}/${dir}"/Scripts/GLSettings/ATI-RPRO.ini
+	# fix scripts for AMD cards
+	sed -i 's/mdl_bFineQuality = 0;/mdl_bFineQuality = 1;/g' "${D}/${dir}"/Scripts/GLSettings/RAM.ini
+	sed -i 's/mdl_bFineQuality = 0;/mdl_bFineQuality = 1;/g' "${D}/${dir}"/Scripts/GLSettings/ATI-RPRO.ini
 
-    insinto /usr
+	insinto /usr
 
-    cd "${D}/${dir}"
-    newicon ssam.xpm ${GN}.xpm
+	cd "${D}/${dir}"
+	newicon ssam.xpm ${GN}.xpm
 
 	make_desktop_entry ${GN} "Serious Sam The Second Encounter" ${GN}
 }
@@ -153,12 +153,12 @@ pkg_postinst() {
 	elog "      - 1_07_patch.gro"
 	elog "     ***************************************************************************************"
 	elog "     You can also install:"
-  	elog "                emerge serioussam-tse-data"
-  	elog "     to extract game content from your CD or mounted image."
+	elog "                emerge serioussam-tse-data"
+	elog "     to extract game content from your CD or mounted image."
 	elog "     ***************************************************************************************"
 	elog "     Look at:"
 	elog "        https://github.com/tx00100xt/serioussam-overlay/README.md"
 	elog "     For information on the first launch of the game"
 	elog ""
-    echo
+	echo
 }

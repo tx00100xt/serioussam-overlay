@@ -3,7 +3,7 @@
 
 EAPI=7
 
-inherit eutils unpacker
+inherit unpacker
 
 # Game name
 GN="serioussamse"
@@ -16,30 +16,29 @@ MY_MAPPACK_ARC="NE_AncientRome.gro"
 
 LICENSE="GPL-2"
 SLOT="0"
-KEYWORDS="~amd64 ~x86 ~arm64"
+KEYWORDS="~amd64 ~arm64 ~x86"
 RESTRICT="bindist mirror"
 IUSE=""
 
 RDEPEND="
-    || ( games-fps/serioussam-tse-vk games-fps/serioussam-tse )
+	|| ( games-fps/serioussam-tse-vk games-fps/serioussam-tse )
 "
 
 S="${WORKDIR}"
 DEPEND="${RDEPEND}"
 BDEPEND="virtual/pkgconfig"
 
-
 src_install() {
-    local dir="/usr/share/${GN}"
+	local dir="/usr/share/${GN}"
 
-    # crerate install dirs
-    mkdir "${D}/usr" && mkdir "${D}/usr/share" 
-    mkdir "${D}${dir}"
+	# crerate install dirs
+	mkdir "${D}/usr" && mkdir "${D}/usr/share"
+	mkdir "${D}${dir}"
 
-    # unpack mod content
-    cat "${DISTDIR}/${MY_MAPPACK_ARC}" > "${MY_MAPPACK_ARC}"
-    unpack ./"${MY_MOD_ARC}"
-    mv "${MY_MAPPACK_ARC}" "${D}${dir}" || die "Failed to moved mappack content"
+	# unpack mod content
+	cat "${DISTDIR}/${MY_MAPPACK_ARC}" > "${MY_MAPPACK_ARC}"
+	unpack ./"${MY_MOD_ARC}"
+	mv "${MY_MAPPACK_ARC}" "${D}${dir}" || die "Failed to moved mappack content"
 
 	insinto /usr
 }
@@ -50,5 +49,5 @@ pkg_postinst() {
 	elog "     Serious Sam Classic Ancient Rome Next Encounter Mappack installed"
 	elog "     *****************************************************************"
 	elog ""
-    echo
+	echo
 }

@@ -20,12 +20,12 @@ XPLUS_ARC="SamTFE-XPLUS.tar.xz"
 
 LICENSE="GPL-2"
 SLOT="0"
-KEYWORDS="~amd64 ~x86 ~arm64"
+KEYWORDS="~amd64 ~arm64 ~x86"
 RESTRICT="bindist mirror"
 IUSE=""
 
 RDEPEND="
-    || ( games-fps/serioussam-tfe-vk games-fps/serioussam-tfe )
+	|| ( games-fps/serioussam-tfe-vk games-fps/serioussam-tfe )
 "
 
 DEPEND="${RDEPEND}"
@@ -53,62 +53,61 @@ PATCHES=(
 	"${FILESDIR}/0003-Fix-load-some-incorrect-custom-maps.patch"
 )
 
-
 src_configure() {
-    einfo "Choosing the player's xplus weapon..."
-    sed -i 's/XPLUS modification" FALSE/XPLUS modification" TRUE/g' "${S}"/CMakeLists.txt || die "Failed to switch to XPLUS"
+	einfo "Choosing the player's xplus weapon..."
+	sed -i 's/XPLUS modification" FALSE/XPLUS modification" TRUE/g' "${S}"/CMakeLists.txt || die "Failed to switch to XPLUS"
 
-    einfo "Setting build type Release..."
-    CMAKE_BUILD_TYPE="Release"
-    if use arm64
-    then
-        local mycmakeargs=(
-            -DTFE=TRUE
-            -DRPI4=TRUE
-        )
-    else
-        local mycmakeargs=(
-            -DTFE=TRUE
-        )
-    fi
-    cmake_src_configure
+	einfo "Setting build type Release..."
+	CMAKE_BUILD_TYPE="Release"
+	if use arm64
+	then
+		local mycmakeargs=(
+			-DTFE=TRUE
+			-DRPI4=TRUE
+		)
+	else
+		local mycmakeargs=(
+			-DTFE=TRUE
+		)
+	fi
+	cmake_src_configure
 }
 
 src_install() {
-    local dir="/usr/share/${GN}"
+	local dir="/usr/share/${GN}"
 
-    # crerate install dirs
-    mkdir "${D}/usr" && mkdir "${D}/usr/share" && mkdir "${D}${dir}"
+	# crerate install dirs
+	mkdir "${D}/usr" && mkdir "${D}/usr/share" && mkdir "${D}${dir}"
 	if use x86; then
-    	mkdir "${D}/usr/lib" && mkdir "${D}/usr/lib/${GN}"  && mkdir "${D}/usr/lib/${GN}/Mods"
-    else
-    	mkdir "${D}/usr/lib64" && mkdir "${D}/usr/lib64/${GN}"  && mkdir "${D}/usr/lib64/${GN}/Mods"
-    fi
+		mkdir "${D}/usr/lib" && mkdir "${D}/usr/lib/${GN}"  && mkdir "${D}/usr/lib/${GN}/Mods"
+	else
+		mkdir "${D}/usr/lib64" && mkdir "${D}/usr/lib64/${GN}"  && mkdir "${D}/usr/lib64/${GN}/Mods"
+	fi
 
-    # moving libs
- 	if use x86; then
-        mkdir "${D}/usr/lib/${GN}/Mods/XPLUS"
-        mv "${BUILD_DIR}"/Debug/libEntities.so "${D}/usr/lib/${GN}/Mods/XPLUS" || die "Failed to moved libEntities.so"
-        mv "${BUILD_DIR}"/Debug/libGame.so "${D}/usr/lib/${GN}/Mods/XPLUS" || die "Failed to moved libGame.so"
-        dosym "/usr/lib/${GN}/libamp11lib.so" "/usr/lib/${GN}/Mods/XPLUS/libamp11lib.so"
-    else
-    	mkdir "${D}/usr/lib64/${GN}/Mods/XPLUS"
-        mv "${BUILD_DIR}"/Debug/libEntities.so "${D}/usr/lib64/${GN}/Mods/XPLUS" || die "Failed to moved libEntities.so"
-        mv "${BUILD_DIR}"/Debug/libGame.so "${D}/usr/lib64/${GN}/Mods/XPLUS" || die "Failed to moved libGame.so"
-        dosym "/usr/lib64/${GN}/libamp11lib.so" "/usr/lib64/${GN}/Mods/XPLUS/libamp11lib.so"
-    fi
+	# moving libs
+	if use x86; then
+		mkdir "${D}/usr/lib/${GN}/Mods/XPLUS"
+		mv "${BUILD_DIR}"/Debug/libEntities.so "${D}/usr/lib/${GN}/Mods/XPLUS" || die "Failed to moved libEntities.so"
+		mv "${BUILD_DIR}"/Debug/libGame.so "${D}/usr/lib/${GN}/Mods/XPLUS" || die "Failed to moved libGame.so"
+		# dosym "/usr/lib/${GN}/libamp11lib.so" "/usr/lib/${GN}/Mods/XPLUS/libamp11lib.so"
+	else
+		mkdir "${D}/usr/lib64/${GN}/Mods/XPLUS"
+		mv "${BUILD_DIR}"/Debug/libEntities.so "${D}/usr/lib64/${GN}/Mods/XPLUS" || die "Failed to moved libEntities.so"
+		mv "${BUILD_DIR}"/Debug/libGame.so "${D}/usr/lib64/${GN}/Mods/XPLUS" || die "Failed to moved libGame.so"
+		# dosym "/usr/lib64/${GN}/libamp11lib.so" "/usr/lib64/${GN}/Mods/XPLUS/libamp11lib.so"
+	fi
 
-    mkdir "${D}${dir}"
-    cat "${DISTDIR}/${XPLUS_ARC}".part* > "${XPLUS_ARC}"
-    unpack ./"${XPLUS_ARC}"
-    # moving xplus 
-    mv "${S}"/Mods "${D}${dir}" || die "Failed to moved XPLUS content"
+	mkdir "${D}${dir}"
+	cat "${DISTDIR}/${XPLUS_ARC}".part* > "${XPLUS_ARC}"
+	unpack ./"${XPLUS_ARC}"
+	# moving xplus
+	mv "${S}"/Mods "${D}${dir}" || die "Failed to moved XPLUS content"
 
-    # removing temp stuff
+	# removing temp stuff
 	rm -f  "${BUILD_DIR}"/{*.cmake,*.txt,*.a,*.ninja,.gitkeep} || die "Failed to removed temp stuff"
-    rm -fr "${BUILD_DIR}"/Debug && rm -fr "${BUILD_DIR}"/CMakeFiles && rm -fr "${MY_CONTENT}"
+	rm -fr "${BUILD_DIR}"/Debug && rm -fr "${BUILD_DIR}"/CMakeFiles && rm -fr "${MY_CONTENT}"
 	rm -f  "${D}${dir}"/Mods/XPLUS.des || die "Failed to removed temp stuff"
-    rm -f  "${D}${dir}"/Mods/XPLUSTbn.tex || die "Failed to removed temp stuff"
+	rm -f  "${D}${dir}"/Mods/XPLUSTbn.tex || die "Failed to removed temp stuff"
 
 	insinto /usr
 }
@@ -119,5 +118,5 @@ pkg_postinst() {
 	elog "     Serious Sam The First Encounter XPLUS Modifications installed"
 	elog "     *************************************************************"
 	elog ""
-    echo
+	echo
 }

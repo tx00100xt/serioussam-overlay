@@ -3,7 +3,7 @@
 
 EAPI=7
 
-inherit eutils unpacker
+inherit unpacker
 
 # Game name
 GN="serioussamse"
@@ -20,34 +20,33 @@ MY_MAPPACK_ARC3="SE_COOP_Teotihuacan_Map_Pack_V2.020.gro"
 
 LICENSE="GPL-2"
 SLOT="0"
-KEYWORDS="~amd64 ~x86 ~arm64"
+KEYWORDS="~amd64 ~arm64 ~x86"
 RESTRICT="bindist mirror"
 IUSE=""
 
 RDEPEND="
-    || ( games-fps/serioussam-tse-vk games-fps/serioussam-tse )
+	|| ( games-fps/serioussam-tse-vk games-fps/serioussam-tse )
 "
 
 S="${WORKDIR}"
 DEPEND="${RDEPEND}"
 BDEPEND="virtual/pkgconfig"
 
-
 src_install() {
-    local dir="/usr/share/${GN}"
+	local dir="/usr/share/${GN}"
 
-    # crerate install dirs
-    mkdir "${D}/usr" && mkdir "${D}/usr/share" 
-    mkdir "${D}${dir}"
+	# crerate install dirs
+	mkdir "${D}/usr" && mkdir "${D}/usr/share"
+	mkdir "${D}${dir}"
 
-    # unpack mod content
-    cat "${DISTDIR}/${MY_MAPPACK_ARC1}" > "${MY_MAPPACK_ARC1}"
-    cat "${DISTDIR}/${MY_MAPPACK_ARC2}" > "${MY_MAPPACK_ARC2}"
-    cat "${DISTDIR}/${MY_MAPPACK_ARC3}" > "${MY_MAPPACK_ARC3}"
+	# unpack mod content
+	cat "${DISTDIR}/${MY_MAPPACK_ARC1}" > "${MY_MAPPACK_ARC1}"
+	cat "${DISTDIR}/${MY_MAPPACK_ARC2}" > "${MY_MAPPACK_ARC2}"
+	cat "${DISTDIR}/${MY_MAPPACK_ARC3}" > "${MY_MAPPACK_ARC3}"
 
-    mv "${MY_MAPPACK_ARC1}" "${D}${dir}" || die "Failed to moved mappack content"
-    mv "${MY_MAPPACK_ARC2}" "${D}${dir}" || die "Failed to moved mappack content"
-    mv "${MY_MAPPACK_ARC3}" "${D}${dir}" || die "Failed to moved mappack content"
+	mv "${MY_MAPPACK_ARC1}" "${D}${dir}" || die "Failed to moved mappack content"
+	mv "${MY_MAPPACK_ARC2}" "${D}${dir}" || die "Failed to moved mappack content"
+	mv "${MY_MAPPACK_ARC3}" "${D}${dir}" || die "Failed to moved mappack content"
 
 	insinto /usr
 }
@@ -58,5 +57,5 @@ pkg_postinst() {
 	elog "     Serious Sam Classic Rakanishu Mappacks installed"
 	elog "     ************************************************"
 	elog ""
-    echo
+	echo
 }
