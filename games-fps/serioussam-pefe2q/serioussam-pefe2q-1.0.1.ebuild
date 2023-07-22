@@ -41,31 +41,40 @@ S="${WORKDIR}/SE1-ParseError-${PV}/Sources"
 MY_CONTENT="${WORKDIR}/SE1-ParseError-${PV}/${MY_PN}"
 BUILD_TMP=${BUILD_DIR}
 
+PATCHES=(
+	"${FILESDIR}/0001-CMakeLists.patch"
+)
+
 src_configure() {
 	einfo "Setting build type Release..."
 	CMAKE_BUILD_TYPE="Release"
+	BUILD_DIR="${BUILD_TMP}/XPLUS"
+	einfo "Choosing the player's xplus weapon..."
 	local mycmakeargs=(
 		-DTFE=FALSE
+		-DXPLUS=TRUE
 	)
 	cmake_src_configure
-	BUILD_DIR="${BUILD_TMP}/XPLUS"
+
 	einfo "Setting build type Release..."
 	CMAKE_BUILD_TYPE="Release"
+	BUILD_DIR="${BUILD_TMP}"
+	einfo "Choosing the player's standart weapon..."
 	local mycmakeargs=(
 		-DTFE=FALSE
+		-DXPLUS=FALSE
 	)
 	cmake_src_configure
 }
 
 src_compile() {
-	BUILD_DIR=${BUILD_TMP}
+	einfo "Compiling with standart weapon..."
 	cmake_src_compile
-	einfo "Choosing the player's xplus weapon..."
+	einfo "Compiling with standart xplus weapon..."
 	rm -f "${S}"/EntitiesMP/PlayerWeapons.es || die "Failed to removed PlayerWeapons.es"
 	mv "${S}"/EntitiesMP/PlayerWeaponsHD.es "${S}"/EntitiesMP/PlayerWeapons.es || die "Failed to moved PlayerWeapons.es"
 	BUILD_DIR="${BUILD_TMP}/XPLUS"
 	cmake_src_compile
-	BUILD_DIR=${BUILD_TMP}
 }
 
 src_install() {
@@ -89,36 +98,36 @@ src_install() {
 	unpack ./"${MY_MOD_ARC}"
 	mv Mods "${D}${dir}" || die "Failed to moved mod content"
 
-	# moving libs
+	# moving standart libs
 	if use x86; then
-		mv "${BUILD_DIR}"/Debug/libEntitiesMP.so \
+		mv "${BUILD_TMP}"/Debug/libEntitiesMP.so \
 			"${D}/usr/lib/${GN}/Mods/${MY_MOD}"/${MY_LIB1} || die "Failed to moved libEntities.so"
-		mv "${BUILD_DIR}"/Debug/libGameMP.so \
+		mv "${BUILD_TMP}"/Debug/libGameMP.so \
 			"${D}/usr/lib/${GN}/Mods/${MY_MOD}"/${MY_LIB2} || die "Failed to moved libGame.so"
 	else
-		mv "${BUILD_DIR}"/Debug/libEntitiesMP.so \
+		mv "${BUILD_TMP}"/Debug/libEntitiesMP.so \
 			"${D}/usr/lib64/${GN}/Mods/${MY_MOD}"/${MY_LIB1} || die "Failed to moved libEntities.so"
-		mv "${BUILD_DIR}"/Debug/libGameMP.so \
+		mv "${BUILD_TMP}"/Debug/libGameMP.so \
 			"${D}/usr/lib64/${GN}/Mods/${MY_MOD}"/${MY_LIB2} || die "Failed to moved libGame.so"
 	fi
 
 	# moving HD libs
 	if use x86; then
-		mv "${BUILD_DIR}"/XPLUS/Debug/libEntitiesMP.so \
+		mv "${BUILD_DIR}"/Debug/libEntitiesMP.so \
 			"${D}/usr/lib/${GN}/Mods/${MY_MOD}HD"/${MY_LIB1} || die "Failed to moved libEntities.so"
-		mv "${BUILD_DIR}"/XPLUS/Debug/libGameMP.so \
+		mv "${BUILD_DIR}"/Debug/libGameMP.so \
 			"${D}/usr/lib/${GN}/Mods/${MY_MOD}HD"/${MY_LIB2} || die "Failed to moved libGame.so"
 	else
-		mv "${BUILD_DIR}"/XPLUS/Debug/libEntitiesMP.so \
+		mv "${BUILD_DIR}"/Debug/libEntitiesMP.so \
 			"${D}/usr/lib64/${GN}/Mods/${MY_MOD}HD"/${MY_LIB1} || die "Failed to moved libEntities.so"
-		mv "${BUILD_DIR}"/XPLUS/Debug/libGameMP.so \
+		mv "${BUILD_DIR}"/Debug/libGameMP.so \
 			"${D}/usr/lib64/${GN}/Mods/${MY_MOD}HD"/${MY_LIB2} || die "Failed to moved libGame.so"
 	fi
 
 	# removing temp stuff
-	rm -f  "${BUILD_DIR}"/{*.cmake,*.txt,*.a,*.ninja,.gitkeep} || die "Failed to removed temp stuff"
-	rm -fr "${BUILD_DIR}"/Debug && rm -fr "${BUILD_DIR}"/CMakeFiles && rm -fr "${MY_CONTENT}"
-	rm -fr "${BUILD_DIR}"/XPLUS
+	rm -f  "${BUILD_TMP}"/{*.cmake,*.txt,*.a,*.ninja,.gitkeep} || die "Failed to removed temp stuff"
+	rm -fr "${BUILD_TMP}"/Debug && rm -fr "${BUILD_TMP}"/CMakeFiles && rm -fr "${MY_CONTENT}"
+	rm -fr "${BUILD_TMP}"/XPLUS
 
 	insinto /usr
 
