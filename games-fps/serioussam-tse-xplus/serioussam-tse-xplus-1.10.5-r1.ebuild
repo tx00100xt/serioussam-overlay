@@ -34,20 +34,6 @@ BDEPEND="virtual/pkgconfig"
 S="${WORKDIR}/SeriousSamClassic-${PV}/${MY_PN}/Sources"
 MY_CONTENT="${WORKDIR}/SeriousSamClassic-${PV}/${MY_PN}"
 
-QA_TEXTRELS="
-usr/lib/${GN}/Mods/XPLUS/Bin/libEntitiesMP.so
-usr/lib/${GN}/XPLUS/Bin/libGameMP.so
-usr/lib64/${GN}/Mods/XPLUS/Bin/libEntitiesMP.so
-usr/lib64/${GN}/XPLUS/Bin/libGameMP.so
-"
-
-QA_FLAGS_IGNORED="
-usr/lib/${GN}/Mods/XPLUS/Bin/libEntitiesMP.so
-usr/lib/${GN}/XPLUS/Bin/libGameMP.so
-usr/lib64/${GN}/Mods/XPLUS/Bin/libEntitiesMP.so
-usr/lib64/${GN}/XPLUS/Bin/libGameMP.so
-"
-
 PATCHES=(
 	"${FILESDIR}/rparh_security-9999.patch"
 	"${FILESDIR}/0003-Fix-load-some-incorrect-custom-maps.patch"

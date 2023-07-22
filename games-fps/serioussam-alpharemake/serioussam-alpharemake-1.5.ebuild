@@ -38,20 +38,6 @@ BDEPEND="virtual/pkgconfig"
 S="${WORKDIR}/SeriousSamAlphaRemake-${PV}/Sources"
 MY_CONTENT="${WORKDIR}/SeriousSamAlphaRemake-${PV}/SamTFE"
 
-QA_TEXTRELS="
-usr/lib/${GN}/Mods/${MY_MOD}/${MY_LIB1}
-usr/lib/${GN}/Mods/${MY_MOD}/${MY_LIB2}
-usr/lib64/${GN}/Mods/${MY_MOD}/${MY_LIB1}
-usr/lib64/${GN}/Mods/${MY_MOD}/${MY_LIB2}
-"
-
-QA_FLAGS_IGNORED="
-usr/lib/${GN}/Mods/${MY_MOD}/${MY_LIB1}
-usr/lib/${GN}/Mods/${MY_MOD}/${MY_LIB2}
-usr/lib64/${GN}/Mods/${MY_MOD}/${MY_LIB1}
-usr/lib64/${GN}/Mods/${MY_MOD}/libGame.s
-"
-
 src_configure() {
 	einfo "Setting build type Release..."
 	CMAKE_BUILD_TYPE="Release"

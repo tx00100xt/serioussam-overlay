@@ -33,20 +33,6 @@ BDEPEND="virtual/pkgconfig"
 S="${WORKDIR}/SE1-TFE-${MY_MOD}-${PV}/Sources"
 MY_CONTENT="${WORKDIR}/SE1-TFE-${MY_MOD}-${PV}/${MY_PN}"
 
-QA_TEXTRELS="
-usr/lib/${GN}/Mods/${MY_MOD}/libEntities.so
-usr/lib/${GN}/Mods/${MY_MOD}/libGame.so
-usr/lib64/${GN}/Mods/${MY_MOD}/libEntities.so
-usr/lib64/${GN}/Mods/${MY_MOD}/libGame.so
-"
-
-QA_FLAGS_IGNORED="
-usr/lib/${GN}/Mods/${MY_MOD}/libEntities.so
-usr/lib/${GN}/Mods/${MY_MOD}/libGame.so
-usr/lib64/${GN}/Mods/${MY_MOD}/libEntities.so
-usr/lib64/${GN}/Mods/${MY_MOD}/libGame.so
-"
-
 src_configure() {
 	einfo "Setting build type Release..."
 	CMAKE_BUILD_TYPE="Release"

@@ -40,28 +40,6 @@ BDEPEND="virtual/pkgconfig"
 S="${WORKDIR}/SE1-ParseError-${PV}/Sources"
 MY_CONTENT="${WORKDIR}/SE1-ParseError-${PV}/${MY_PN}"
 
-QA_TEXTRELS="
-usr/lib/${GN}/Mods/${MY_MOD}/Bin/${MY_LIB1}
-usr/lib/${GN}/Mods/${MY_MOD}/Bin/${MY_LIB2}
-usr/lib/${GN}/Mods/${MY_MOD}HD/Bin/${MY_LIB1}
-usr/lib/${GN}/Mods/${MY_MOD}HD/Bin/${MY_LIB2}
-usr/lib64/${GN}/Mods/${MY_MOD}/Bin/${MY_LIB1}
-usr/lib64/${GN}/Mods/${MY_MOD}/Bin/${MY_LIB2}
-usr/lib64/${GN}/Mods/${MY_MOD}HD/Bin/${MY_LIB1}
-usr/lib64/${GN}/Mods/${MY_MOD}HD/Bin/${MY_LIB2}
-"
-
-QA_FLAGS_IGNORED="
-usr/lib/${GN}/Mods/${MY_MOD}/Bin/${MY_LIB1}
-usr/lib/${GN}/Mods/${MY_MOD}/Bin/${MY_LIB2}
-usr/lib/${GN}/Mods/${MY_MOD}HD/Bin/${MY_LIB1}
-usr/lib/${GN}/Mods/${MY_MOD}HD/Bin/${MY_LIB2}
-usr/lib64/${GN}/Mods/${MY_MOD}/Bin/${MY_LIB1}
-usr/lib64/${GN}/Mods/${MY_MOD}/Bin/${MY_LIB2}
-usr/lib64/${GN}/Mods/${MY_MOD}HD/Bin/${MY_LIB1}
-usr/lib64/${GN}/Mods/${MY_MOD}HD/Bin/${MY_LIB2}
-"
-
 src_configure() {
 	einfo "Choosing the player's standart weapon..."
 	rm -f "${S}/EntitiesMP/PlayerWeapons.es" || die "Failed to removed PlayerWeapons.es"

@@ -37,20 +37,6 @@ BDEPEND="virtual/pkgconfig"
 S="${WORKDIR}/SE1-TFE-OddWorld-${PV}/Sources"
 MY_CONTENT="${WORKDIR}/SE1-TFE-OddWorld-${PV}/SamTFE"
 
-QA_TEXTRELS="
-usr/lib/${GN}/Mods/${MY_MOD}/${MY_LIB1}
-usr/lib/${GN}/Mods/${MY_MOD}/${MY_LIB2}
-usr/lib64/${GN}/Mods/${MY_MOD}/${MY_LIB1}
-usr/lib64/${GN}/Mods/${MY_MOD}/${MY_LIB2}
-"
-
-QA_FLAGS_IGNORED="
-usr/lib/${GN}/Mods/${MY_MOD}/${MY_LIB1}
-usr/lib/${GN}/Mods/${MY_MOD}/${MY_LIB2}
-usr/lib64/${GN}/Mods/${MY_MOD}/${MY_LIB1}
-usr/lib64/${GN}/Mods/${MY_MOD}/libGame.s
-"
-
 PATCHES=(
 	"${FILESDIR}/fix-thunder.patch"
 )
