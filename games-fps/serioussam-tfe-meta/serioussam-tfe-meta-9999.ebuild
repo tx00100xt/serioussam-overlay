@@ -22,10 +22,8 @@ DEPEND=""
 RDEPEND="
 	games-fps/serioussam-alpharemake
 	games-fps/serioussam-oddworld
-	games-fps/serioussam-pefe2q
-	games-fps/serioussam-tfe-data
-	games-fps/serioussam-tfe-xplus
+	games-fps/serioussam-parseerror
 	games-fps/serioussam-tower
-	vulkan? ( ~games-fps/serioussam-tfe-vk-${SSAM_BRANCH} )
-	!vulkan? ( ~games-fps/serioussam-tfe-${SSAM_BRANCH} )
+	vulkan? ( ~games-fps/serioussam-vk-${SSAM_BRANCH} )
+	!vulkan? ( ~games-fps/serioussam-${SSAM_BRANCH} )
 "

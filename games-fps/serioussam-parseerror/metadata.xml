@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>t.x00100x.t@yandex.ru</email>
+		<name>Alexander</name>
+	</maintainer>
+	<use>
+		<flag name="xplus">Additionally build and install a modification with weapons from XPLUS.</flag>
+	</use>
+	<upstream>
+		<remote-id type="github">tx00100xt/SE1-ParseError</remote-id>
+	</upstream>
+</pkgmetadata>

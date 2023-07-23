@@ -1,4 +1,4 @@
-# Copyright 1999-2021 Gentoo Authors
+# Copyright 1999-2023 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=7
@@ -20,14 +20,10 @@ IUSE="vulkan"
 
 DEPEND=""
 RDEPEND="
-	games-fps/serioussam-dancesworld
+	games-fps/serioussam-alpharemake
+	games-fps/serioussam-oddworld
 	games-fps/serioussam-parseerror
-	games-fps/serioussam-hno
-	games-fps/serioussam-st8vi
-	games-fps/serioussam-st8vipe
-	games-fps/serioussam-brightisland-mappack
-	games-fps/serioussam-nextencounter-mappack
-	games-fps/serioussam-rakanishu-mappacks
-	vulkan? ( ~games-fps/serioussam-vk-${SSAM_BRANCH} )
-	!vulkan? ( ~games-fps/serioussam-${SSAM_BRANCH} )
+	games-fps/serioussam-tower
+	vulkan? ( =games-fps/serioussam-vk-${SSAM_BRANCH} )
+	!vulkan? ( =games-fps/serioussam-${SSAM_BRANCH} )
 "

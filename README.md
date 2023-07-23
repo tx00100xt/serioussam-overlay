@@ -7,12 +7,6 @@ Serious Sam The First Encounter and Serious Sam The Second Encounter.
 ### Getting this overlay
 
 Type this in your terminal:
-
-```
-emerge layman 
-layman -o https://raw.githubusercontent.com/tx00100xt/serioussam-overlay/main/serioussam-overlay.xml -f -a serioussam
-```
-or
 ```
 emerge eselect-repository
 eselect repository add serioussam git https://github.com/tx00100xt/serioussam-overlay.git
@@ -24,15 +18,13 @@ emaint sync --repo serioussam
 To build a game with Opengl support, use command:
 
 ```
-emerge serioussam-tfe
-emerge serioussam-tse
+emerge serioussam
 ```
 
 To build a game with Opengl and Vulkan support, use command:
 
 ```
-emerge serioussam-tfe-vk
-emerge serioussam-tse-vk
+emerge serioussam-vk
 
 ```
 To copy game content from your CD or your CD image (First release or Gold edition), use command:
@@ -57,9 +49,11 @@ After the first start of the game:
 
 ### Modification's
 
-To install XPLUS Modification type this in your terminal:
+To install XPLUS Modification type this in your terminal commands before building packages:
 ```
-emerge serioussam-tfe-xplus serioussam-tse-xplus
+# echo "games-fps/serioussam xplus" >> /etc/portage/package.use/serioussam
+# echo "games-fps/serioussam-vk xplus" >> /etc/portage/package.use/serioussam
+# echo "games-fps/serioussam-parseerror xplus" >> /etc/portage/package.use/serioussam
 ```
 
 To install Alpha Remake Modification type this in your terminal:
@@ -79,7 +73,7 @@ emerge serioussam-dancesworld
 
 To install Parse Error Modification type this in your terminal:
 ```
-emerge serioussam-pefe2q serioussam-pese2q
+emerge serioussam-parseerror
 ```
 
 To install Nightmare Tower Modification type this in your terminal:

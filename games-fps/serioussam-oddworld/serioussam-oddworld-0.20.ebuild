@@ -28,7 +28,7 @@ RESTRICT="bindist mirror"
 IUSE=""
 
 RDEPEND="
-	|| ( games-fps/serioussam-tfe-vk games-fps/serioussam-tfe )
+	|| ( games-fps/serioussam-vk games-fps/serioussam )
 "
 
 DEPEND="${RDEPEND}"

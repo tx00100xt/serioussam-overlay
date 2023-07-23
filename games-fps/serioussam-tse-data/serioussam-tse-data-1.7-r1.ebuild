@@ -21,7 +21,7 @@ SLOT="0"
 KEYWORDS="~amd64 ~arm64 ~x86"
 IUSE="ru"
 
-DEPEND="|| ( games-fps/serioussam-tse-vk games-fps/serioussam-tse )"
+DEPEND="|| ( games-fps/serioussam-vk games-fps/serioussam )"
 
 S=${WORKDIR}
 
