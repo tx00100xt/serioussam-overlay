@@ -24,6 +24,6 @@ RDEPEND="
 	games-fps/serioussam-oddworld
 	games-fps/serioussam-parseerror
 	games-fps/serioussam-tower
-	vulkan? ( =games-fps/serioussam-vk-${SSAM_BRANCH} )
-	!vulkan? ( =games-fps/serioussam-${SSAM_BRANCH} )
+	vulkan? ( ~games-fps/serioussam-vk-${SSAM_BRANCH} )
+	!vulkan? ( ~games-fps/serioussam-${SSAM_BRANCH} )
 "
