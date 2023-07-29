@@ -9,10 +9,10 @@ inherit unpacker
 GN="serioussamse"
 
 DESCRIPTION="Serious Sam Classic Bright Island Mappack"
-HOMEPAGE="https://archive.org/details/cecil-bright-island"
-SRC_URI="https://archive.org/download/cecil-bright-island/CECIL_BrightIsland.gro"
+HOMEPAGE="https://archive.org/details/cecil-bright-island-1.1"
+SRC_URI="https://archive.org/download/cecil-bright-island-1.1/CECIL_BrightIsland_1.1.gro"
 
-MY_MAPPACK_ARC="CECIL_BrightIsland.gro"
+MY_MAPPACK_ARC="CECIL_BrightIsland_1.1.gro"
 
 LICENSE="GPL-2"
 SLOT="0"
