@@ -55,9 +55,13 @@ src_install() {
 	local dir="/usr/share/${MY_PN}"
 
 	# crerate install dirs
-	mkdir "${D}/usr" && mkdir "${D}/usr/share"
+	mkdir "${D}/usr" && mkdir "${D}/usr/share" && mkdir "${D}/usr/bin"
 	mkdir "${D}${dir}" && mkdir "${D}${dir}/DB" 
+
+	# moving DB
 	cp "${S}/DB/seriousrunner.db" "${D}${dir}/DB"
+	# moving binares
+	mv "${BUILD_DIR}/${MY_PN}" "${D}/usr/bin"  || die "Failed to moved Serious Runner"
 
 	insinto /usr
 	cd "${D}/${dir}"
