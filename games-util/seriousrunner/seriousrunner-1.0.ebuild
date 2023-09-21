@@ -43,6 +43,7 @@ PATCHES=(
 	"${FILESDIR}/0006-Update_CMakeLists.txt.patch"
 	"${FILESDIR}/0007-Fix_LibArchve_For_old_cmake.patch"
 	"${FILESDIR}/0008-Fix_MainWindow_slot_names.patch"
+	"${FILESDIR}/0009-Added_Themes_for_seriousrunner.patch"
 )
 
 src_configure() {
