@@ -34,18 +34,6 @@ BDEPEND="virtual/pkgconfig"
 
 S="${WORKDIR}/Serious-Runner-${PV}"
 
-PATCHES=(
-	"${FILESDIR}/0001-Fix_slotname_bug.patch"
-	"${FILESDIR}/0002-Update_Readme.md.patch"
-	"${FILESDIR}/0003-Fix_MainWindow.ui.patch"
-	"${FILESDIR}/0004-Fix_Inslall_Button_locked.patch"
-	"${FILESDIR}/0005-Set_ComboBox.patch"
-	"${FILESDIR}/0006-Update_CMakeLists.txt.patch"
-	"${FILESDIR}/0007-Fix_LibArchve_For_old_cmake.patch"
-	"${FILESDIR}/0008-Fix_MainWindow_slot_names.patch"
-	"${FILESDIR}/0009-Added_Themes_for_seriousrunner.patch"
-)
-
 src_configure() {
 	einfo "Setting build type Release..."
 	CMAKE_BUILD_TYPE="Release"
