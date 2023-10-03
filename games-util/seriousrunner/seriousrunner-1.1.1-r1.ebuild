@@ -35,7 +35,7 @@ BDEPEND="virtual/pkgconfig"
 S="${WORKDIR}/Serious-Runner-${PV}"
 
 PATCHES=(
-	"${WORKDIR}/0001-Fix_system_search_DB.patch"
+	"${FILESDIR}/0001-Fix_system_search_DB.patch"
 )
 
 src_configure() {
