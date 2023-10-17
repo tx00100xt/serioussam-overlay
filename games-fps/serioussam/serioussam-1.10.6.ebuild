@@ -56,23 +56,8 @@ MY_CONTENT2="${WORKDIR}/SeriousSamClassic-${PV}/${MY_PN2}"
 BUILD_TMP=${BUILD_DIR}
 
 PATCHES=(
-	"${WORKDIR}/0001-remove_SE1_10b_depend.patch"
-	"${WORKDIR}/0002-Fixed_Platform_definition.patch"
-	"${WORKDIR}/0003-Fix-load-some-incorrect-custom-maps.patch"
-	"${WORKDIR}/0004-cmakeFind.patch"
-	"${WORKDIR}/0005-mainCMakeLists.patch"
-	"${WORKDIR}/0006-${MY_PN1}-CMakeLists.patch"
-	"${WORKDIR}/0007-${MY_PN1}-CMakeLists.patch"
-	"${WORKDIR}/0008-${MY_PN2}-CMakeLists.patch"
-	"${WORKDIR}/0009-${MY_PN2}-CMakeLists.patch"
 	"${FILESDIR}/0010-rparh_security.patch"
 )
-
-src_unpack() {
-	unpack "${P}".tar.gz
-	cd "${WORKDIR}"
-	unpack "${FILESDIR}/${P}"-patches.tar.xz
-}
 
 src_configure() {
 	einfo "Remove Win32 stuff..."
