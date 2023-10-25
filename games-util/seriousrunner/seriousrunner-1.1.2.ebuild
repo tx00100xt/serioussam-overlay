@@ -34,10 +34,6 @@ BDEPEND="virtual/pkgconfig"
 
 S="${WORKDIR}/Serious-Runner-${PV}"
 
-PATCHES=(
-	"${FILESDIR}/0001-Fix_system_search_DB.patch"
-)
-
 src_configure() {
 	einfo "Setting build type Release..."
 	CMAKE_BUILD_TYPE="Release"

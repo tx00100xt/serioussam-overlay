@@ -37,10 +37,6 @@ BDEPEND="virtual/pkgconfig"
 S="${WORKDIR}/SE1-TFE-OddWorld-${PV}/Sources"
 MY_CONTENT="${WORKDIR}/SE1-TFE-OddWorld-${PV}/SamTFE"
 
-PATCHES=(
-	"${FILESDIR}/fix-thunder.patch"
-)
-
 src_configure() {
 	einfo "Setting build type Release..."
 	CMAKE_BUILD_TYPE="Release"

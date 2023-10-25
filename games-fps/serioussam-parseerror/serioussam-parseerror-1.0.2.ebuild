@@ -50,10 +50,6 @@ MY_CONTENT1="${WORKDIR}/SE1-ParseError-${PV}/${MY_PN1}"
 MY_CONTENT2="${WORKDIR}/SE1-ParseError-${PV}/${MY_PN2}"
 BUILD_TMP=${BUILD_DIR}
 
-PATCHES=(
-	"${FILESDIR}/0001-CMakeLists.patch"
-)
-
 src_configure() {
 	if use xplus; then
 		einfo "Setting build type Release..."
