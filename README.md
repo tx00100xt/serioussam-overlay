@@ -13,7 +13,7 @@ eselect repository enable serioussam
 emaint sync --repo serioussam
 ```
 
-### Ebuilds
+## Ebuilds
 
 
 
@@ -63,6 +63,7 @@ To install Hero Number One Modification type this in your terminal:
 ```
 emerge serioussam-hno --autounmask=y
 ```
+### Mappack's
 
 To install Bright Island, Ancient Rome Next Encounter and Rakanishu Mappacks type this in your terminal:
 ```
