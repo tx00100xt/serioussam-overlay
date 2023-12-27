@@ -45,7 +45,7 @@ src_install() {
 
 	# crerate install dirs
 	mkdir "${D}/usr" && mkdir "${D}/usr/share" && mkdir "${D}/usr/bin"
-	mkdir "${D}${dir}" && mkdir "${D}${dir}/DB" 
+	mkdir "${D}${dir}" && mkdir "${D}${dir}/DB"
 
 	# moving DB
 	cp "${S}/DB/seriousrunner.db" "${D}${dir}/DB"
