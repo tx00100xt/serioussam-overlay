@@ -11,11 +11,11 @@ MY_PN2="SamTSE"
 GN1="serioussam"
 GN2="serioussamse"
 # URL prefix
-URL1="https://github.com/tx00100xt/SeriousSamClassic/archive/"
+URL1="https://github.com/tx00100xt/SeriousSamClassic-VK/archive/"
 URL2="https://github.com/tx00100xt/serioussam-mods/raw/main/"
 
 DESCRIPTION="XPLUS modificarion for linux port of Serious Sam"
-HOMEPAGE="https://github.com/tx00100xt/SeriousSamClassic"
+HOMEPAGE="https://github.com/tx00100xt/SeriousSamClassic-VK"
 SRC_URI="${URL1}$refs/tags/${PV}c.tar.gz -> ${P}.tar.gz
 	${URL2}${MY_PN1}-XPLUS/${MY_PN1}-XPLUS.tar.xz.partaa
 	${URL2}${MY_PN1}-XPLUS/${MY_PN1}-XPLUS.tar.xz.partab
@@ -24,10 +24,10 @@ SRC_URI="${URL1}$refs/tags/${PV}c.tar.gz -> ${P}.tar.gz
 	${URL2}${MY_PN2}-XPLUS/${MY_PN2}-XPLUS.tar.xz.partab
 	${URL2}${MY_PN2}-XPLUS/${MY_PN2}-XPLUS.tar.xz.partac
 "
-S="${WORKDIR}/SeriousSamClassic-tags-${PV}c"
+S="${WORKDIR}/SeriousSamClassic-VK-tags-${PV}c"
 
-MY_CONTENT1="${WORKDIR}/SeriousSamClassic-tags-${PV}c/${MY_PN1}"
-MY_CONTENT2="${WORKDIR}/SeriousSamClassic-rags-${PV}c/${MY_PN2}"
+MY_CONTENT1="${WORKDIR}/SeriousSamClassic-VK-tags-${PV}c/${MY_PN1}"
+MY_CONTENT2="${WORKDIR}/SeriousSamClassic-VK-tags-${PV}c/${MY_PN2}"
 XPLUS_ARC1="${MY_PN1}-XPLUS.tar.xz"
 XPLUS_ARC2="${MY_PN2}-XPLUS.tar.xz"
 
